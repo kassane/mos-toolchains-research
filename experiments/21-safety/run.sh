@@ -70,20 +70,30 @@ if [ -f "$B/zov.o" ]; then
   printf "  Zig   ReleaseSafe overflow check: exit=%s %s\n" "$ovc" "$([ "$ovc" = 88 ] && echo '-> overflow trap FIRED (works)' || echo '-> NO trap (unexpected)')"
   [ "$ovc" = 88 ] || bad=$((bad+1))
 fi
-# array-bounds check: crashes the Zig (LLVM-22) backend. -fno-compiler-rt does NOT help.
+# array-bounds check WITH the zig-mos-examples `mos_panic` handler -> WORKS.
+"$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe \
+   --dep mos_panic -Mroot="$HERE/zig_bounds_panic.zig" -Mmos_panic="$HERE/mos_panic.zig" \
+   -femit-bin="$B/zbp.o" 2>/dev/null
+if [ -f "$B/zbp.o" ]; then
+  printf '#include <stdint.h>\nuint8_t zig_ix(uint8_t);\nint main(){ return zig_ix(5); }\n' > "$B/zbp_main.c"
+  "$SDKBIN/mos-sim-clang" -Os "$B/zbp_main.c" "$B/zbp.o" -o "$B/zbp.sim" 2>/dev/null
+  set +e; "$SDKBIN/mos-sim" "$B/zbp.sim"; zbc=$?; set -e
+  printf "  Zig   ReleaseSafe bounds check (mos_panic): exit=%s %s\n" "$zbc" "$([ "$zbc" = 77 ] && echo '-> bounds trap FIRED (works with mos_panic)' || echo '-> unexpected')"
+  [ "$zbc" = 77 ] || bad=$((bad+1))
+fi
+# CAVEAT: the DEFAULT/FullPanic handler crashes the LLVM-22 backend on the same code.
 set +e
-"$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -fno-compiler-rt -femit-bin="$B/zbc.o" "$HERE/zig_bounds.zig" 2>"$B/zbc.err"
+"$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -fno-compiler-rt -femit-bin="$B/zbc.o" "$HERE/zig_bounds.zig" 2>/dev/null
 bcrc=$?; set -e
 if [ "$bcrc" -ge 128 ]; then
-  echo "  Zig   ReleaseSafe bounds check: compiler CRASH (signal $((bcrc-128)); -fno-compiler-rt does NOT help)"
-  # gdb root cause (if available): SIGSEGV in LLVM MachineCopyPropagation
+  echo "  Zig   ReleaseSafe bounds, DEFAULT panic: compiler CRASH (signal $((bcrc-128)); -fno-compiler-rt does NOT help)"
   if command -v gdb >/dev/null 2>&1; then
     frame="$(gdb -q -batch -ex 'set pagination off' -ex run -ex 'bt 3' \
         --args "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -femit-bin=/dev/null "$HERE/zig_bounds.zig" 2>/dev/null \
         | grep -oE 'CopyTracker::invalidateRegister|MachineCopyPropagation' | head -1)"
-    echo "    gdb: SIGSEGV in LLVM-22 MachineCopyPropagation ${frame:+(}${frame}${frame:+)} (fixed in LLVM 23 -> Rust bounds-check works)"
+    echo "    gdb: SIGSEGV in LLVM-22 MachineCopyPropagation ${frame:+(}${frame}${frame:+)} -- so use mos_panic; fixed in LLVM 23"
   fi
-elif [ -f "$B/zbc.o" ]; then echo "  Zig   ReleaseSafe bounds check: now BUILDS (LLVM-22 backend bug fixed?)"; fi
+fi
 
-echo "== $bad unexpected result(s) (0 = safety battery + Rust runtime trap + Zig overflow trap) =="
+echo "== $bad unexpected result(s) (0 = safety battery + Rust trap + Zig overflow + Zig bounds via mos_panic) =="
 exit $((bad>0))

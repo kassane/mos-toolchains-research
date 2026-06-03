@@ -53,19 +53,23 @@ Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both rejec
 **Runtime** safety (run on `mos-sim`):
 - **Rust** bounds check (`a[5]`, len 3): fires → panic → `abort` → exit 77. ✅
 - **C**: reads OOB (UB), no trap.
-- **Zig `ReleaseSafe`**: *overflow* checks **work** (`a+b` overflow → trap, exit
-  88), but the *array-bounds* check **crashes the compiler**. gdb pins it to a
-  **SIGSEGV in LLVM-22 `MachineCopyPropagation` (`CopyTracker::invalidateRegister`)**
-  while optimizing the bounds-check machine code — an LLVM-22 *backend* bug, not
-  compiler_rt: **`-fno-compiler-rt` does not help**. It's fixed in LLVM 23, which
-  is why Rust's (LLVM-23) bounds check works and clang's does too. `-ODebug` also
-  fails (on `@llvm.returnaddress`).
-  - **It is Zig-codegen-specific, not all-LLVM-22:** LDC is *also* LLVM 22 but
-    does **not** hit it — its `-boundscheck=on` index lowers to `cmp`/`bcs`/`jsr
-    __assert` (a plain call) and builds clean at `-O0`…`-O3`/`-Oz`. Zig's
-    branch-to-inline-panic pattern is what trips `CopyTracker`. So it's a latent
-    *shared-backend* bug that only Zig's lowering triggers in practice.
+- **Zig `ReleaseSafe`**: both *overflow* (`a+b` → exit 88) **and** *array-bounds*
+  (`a[5]` → exit 77) checks **work and trap** — provided you use a bare-metal
+  panic handler. The handler is the catch: the **default / `FullPanic`** handler
+  crashes the LLVM-22 backend on the bounds-check code (gdb: **SIGSEGV in
+  `MachineCopyPropagation` / `CopyTracker::invalidateRegister`**; `-fno-compiler-rt`
+  does *not* help — it's a backend bug, fixed in LLVM 23). The fix is the
+  namespace-style **`mos_panic`** handler from `kassane/zig-mos-examples`
+  (`sdk/panic.zig`: trivial `outOfBounds`/`integerOverflow`/… → `while(true){}`,
+  no formatting/`@returnAddress`). `pub const panic = @import("mos_panic")` →
+  ReleaseSafe bounds *and* overflow build and trap. (`-ODebug` still fails on
+  `@llvm.returnaddress`; the SDK examples also note a Debug **SSP** lowering
+  failure — use a release mode.)
+  - **The default-handler crash is Zig-codegen-specific, not all-LLVM-22:** LDC
+    is *also* LLVM 22 but never hits it — its `-boundscheck=on` index lowers to
+    `cmp`/`bcs`/`jsr __assert` and builds clean at `-O0`…`-O3`/`-Oz`.
 
-So **Rust has the most complete runtime memory safety on the 6502** (bounds +
-overflow); Zig gets *overflow* safety but not array-bounds (LLVM-22 backend
-crash); for the compile-time half, D `@safe` ≈ Rust safe.
+So **all three of Rust, Zig (with `mos_panic`), and D `@safe` give real safety on
+the 6502**: Rust = compile-time + runtime (bounds+overflow); Zig = runtime
+(bounds+overflow, needs the `mos_panic` handler); D = compile-time `@safe`
+(betterC has no runtime array-bounds handler).

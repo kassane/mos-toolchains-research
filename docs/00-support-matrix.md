@@ -24,7 +24,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | Compile-time reflection | ❌ | ❌ | ✅ `__traits` | ✅ `@typeInfo` | C++ P2996 = C++26; exp 19 |
 | File embedding | ✅ `#embed` | ✅ `include_bytes!` | ✅ `import()` | ✅ `@embedFile` | also `.incbin`; exp 18 |
 | Compile-time memory safety | ❌ | ✅ | ✅ `@safe` | ⚠️ runtime model | C/C++ none; exp 21 |
-| Runtime memory safety | ❌ | ✅ bounds+overflow→trap | ❌ betterC | ⚠️ overflow only | Zig bounds-check crashes LLVM‑22 backend; exp 21 |
+| Runtime memory safety | ❌ | ✅ bounds+overflow→trap | ❌ betterC | ✅ w/ `mos_panic` | Zig needs zig-mos-examples' panic handler (default crashes LLVM‑22); exp 21 |
 | RAII / scope-guard cleanup | ✅ | ✅ `Drop` | ✅ `scope(exit)` | ✅ `defer` | zero-cost, LIFO; exp 22 |
 | DWARF debug info | ✅ v5 | ✅ v4 | ✅ v4 | ✅ v4 | no CFI; exp 11 |
 

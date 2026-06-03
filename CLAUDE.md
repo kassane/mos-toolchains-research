@@ -73,12 +73,16 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    indirectly (`byval`/`ptr`), so a small struct passed by value corrupts across
    that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
    agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
-8. **Debug builds & runtime safety:** Zig `-ODebug` fails on overflow-checked ops
-   (`@llvm.returnaddress` not legalizable). `-OReleaseSafe` *overflow* checks
-   work (trap fires) but the *array-bounds* check **crashes the LLVM-22 backend**
-   — gdb: SIGSEGV in `MachineCopyPropagation`/`CopyTracker::invalidateRegister`
-   (LLVM-22 bug, fixed in LLVM 23; **`-fno-compiler-rt` does NOT help**). Rust's
-   runtime bounds-check *does* work (panic=abort traps, LLVM-23). Rust dev profile
+8. **Debug builds & runtime safety:** Zig `-ODebug` fails (`@llvm.returnaddress`;
+   plus an SSP stack-protector lowering failure — use a release mode).
+   `-OReleaseSafe` runtime safety (overflow **and** array-bounds) **works** but
+   needs a bare-metal panic handler: the **default/`FullPanic`** handler crashes
+   the LLVM-22 backend on bounds-check code (gdb: SIGSEGV in
+   `MachineCopyPropagation`/`CopyTracker::invalidateRegister`; `-fno-compiler-rt`
+   does NOT help — LLVM-22 bug, fixed in 23). Use the namespace-style `mos_panic`
+   handler from `kassane/zig-mos-examples` (`sdk/panic.zig`, trivial
+   `outOfBounds`→`while(true){}`) → ReleaseSafe traps cleanly (exp 21). Rust's
+   bounds-check works out of the box (panic=abort, LLVM-23); Rust dev profile
    fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm works in
    clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10,12.
 9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
