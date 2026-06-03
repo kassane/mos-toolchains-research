@@ -12,8 +12,13 @@ dwver(){ "$DD" "$1" 2>/dev/null | grep -oE 'version = 0x000[0-9]' | head -1 | gr
 secs(){ "$RE" -SW "$1" 2>/dev/null | grep -oE '\.debug[a-z_]*' | sort -u | tr '\n' ' '; }
 addrsz(){ "$DD" "$1" 2>/dev/null | grep -oE 'addr_size = 0x0[0-9]' | head -1 | grep -oE '[0-9]$'; }
 hascfi(){ "$RE" -SW "$1" 2>/dev/null | grep -qE 'eh_frame|debug_frame' && echo yes || echo no; }
-subprog(){ "$DD" "$1" 2>/dev/null | grep -A6 'DW_TAG_subprogram' | grep -q 'dbg_add' && \
-           { n=$("$DD" "$1" 2>/dev/null | grep -c 'DW_TAG_formal_parameter'); echo "yes ($n params)"; } || echo "no"; }
+# a DW_TAG_subprogram DIE named dbg_add WITH at least one formal_parameter child,
+# counted within that DIE's block (until the next sibling at the same depth).
+subprog(){ "$DD" "$1" 2>/dev/null | awk '
+   /DW_TAG_subprogram/ {infn=0}
+   /DW_AT_name.*"dbg_add"/ {infn=1; hit=1}
+   infn && /DW_TAG_formal_parameter/ {p++}
+   END { if(hit) printf "yes (%d params)", p+0; else printf "no" }'; }
 report(){ printf "  %-6s DWARFv%-2s addr_size=%-2s CFI=%-3s subprogram=%-12s\n    secs: %s\n" \
           "$1" "$(dwver "$2")" "$(addrsz "$2")" "$(hascfi "$2")" "$(subprog "$2")" "$(secs "$2")"; }
 
@@ -22,9 +27,10 @@ echo "### C (clang) ###"
 echo "### D (LDC) ###"
 "$LDC" -betterC -g -O0 -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/dbg.d" -of="$B/d.o"; report D "$B/d.o"
 echo "### Rust (rust-mos; needs lto+debug=2, dev profile fails the G_UCMP gap) ###"
-( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >/dev/null 2>&1 )
+( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/rust-build.log" 2>&1 ) \
+  || echo "  Rust  BUILD FAILED (see build/rust-build.log)"
 RSA="$(find "$HERE/rust/target" -name 'libdbg_rs.a'|head -1)"
-( cd "$B" && "$SDKBIN/llvm-ar" x "$RSA" 2>/dev/null )
+[ -n "$RSA" ] && ( cd "$B" && "$SDKBIN/llvm-ar" x "$RSA" 2>/dev/null )
 RSO="$(ls "$B"/*dbg_rs*.o 2>/dev/null | head -1)"; report Rust "$RSO"
 echo "### Zig (Debug, wrapping ops -> compiles + emits DWARF) ###"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -ODebug -femit-bin="$B/zig.o" "$HERE/dbg.zig" 2>/dev/null; report Zig "$B/zig.o"
@@ -38,13 +44,20 @@ else
   echo "  (the overflow-check panic handler uses @llvm.returnaddress; MOS GlobalISel can't legalize it)"
 fi
 
-echo "### parity verdict ###"
-echo "  clang=DWARF5, LDC/Rust/Zig=DWARF4; all addr_size=4 (16-bit target!); no CFI anywhere."
-echo "  Gaps: Zig Debug needs wrapping ops (safety panic uses returnaddress);"
-echo "        Rust dev profile needs lto+debug (dev/non-LTO hits the G_UCMP gap)."
+echo "### parity verdict (derived from the probes above, not hardcoded) ###"
 bad=0
-for o in "$B/c.o" "$B/d.o" "$RSO" "$B/zig.o"; do
-  "$RE" -SW "$o" 2>/dev/null | grep -q '\.debug_info' || { echo "  MISSING DWARF: $o"; bad=$((bad+1)); }
+for pair in "C:$B/c.o" "D:$B/d.o" "Rust:$RSO" "Zig:$B/zig.o"; do
+  lang="${pair%%:*}"; o="${pair##*:}"
+  # invariant facts that MUST hold for every frontend (gated):
+  "$RE" -SW "$o" 2>/dev/null | grep -q '\.debug_info' || { echo "  FAIL $lang: no .debug_info"; bad=$((bad+1)); }
+  [ "$(addrsz "$o")" = 4 ] || { echo "  FAIL $lang: addr_size != 4 (was '$(addrsz "$o")')"; bad=$((bad+1)); }
+  [ "$(hascfi "$o")" = no ] || { echo "  FAIL $lang: unexpected CFI (.eh_frame/.debug_frame)"; bad=$((bad+1)); }
+  case "$(subprog "$o")" in yes*) ;; *) echo "  FAIL $lang: no dbg_add subprogram DIE"; bad=$((bad+1));; esac
 done
-echo "== $bad frontend(s) missing DWARF (0 = full parity) =="
+# report the DWARF versions actually seen (self-updating, not a stale string)
+printf "  observed DWARF versions: C=%s D=%s Rust=%s Zig=%s (all addr_size=4, no CFI)\n" \
+  "$(dwver "$B/c.o")" "$(dwver "$B/d.o")" "$(dwver "$RSO")" "$(dwver "$B/zig.o")"
+echo "  gaps: Zig Debug needs wrapping ops (safety panic -> returnaddress);"
+echo "        Rust dev profile needs lto+debug (non-LTO hits the G_UCMP gap)."
+echo "== $bad parity violation(s) (0 = every frontend: DWARF + addr_size=4 + no-CFI + subprogram) =="
 exit $((bad>0))

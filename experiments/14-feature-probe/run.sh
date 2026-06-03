@@ -15,14 +15,15 @@ printf 'export fn f() void { asm volatile ("nop"); }\n' > "$B/a.zig"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/az.o" "$B/a.zig" 2>/dev/null; echo "  zig inline-asm   : $(ok $?)"
 printf 'module a; extern(C) void f(){ asm { "nop"; } }\n' > "$B/a.d"
 "$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$B/a.d" -of="$B/ad.o" 2>/dev/null; echo "  ldc inline-asm   : $(ok $?)  (LDC uses LLVM-style asm; betterC)"
-cat > "$B/a.rs" <<'RS'
-#![no_std]
-use core::arch::asm;
-#[unsafe(no_mangle)] pub extern "C" fn f(){ unsafe { asm!("nop"); } }
-#[panic_handler] fn p(_:&core::panic::PanicInfo)->!{loop{}}
-RS
-"$RUSTC" --target mos-unknown-none -Ctarget-cpu=mos6502 --crate-type=lib --emit=obj -o "$B/ar.o" "$B/a.rs" 2>"$B/ar.err"
-rc=$?; echo "  rust inline-asm  : $(ok $rc)  $( [ $rc != 0 ] && echo "(rust-mos#13: no inline asm on MOS)")"
+# Rust: build via the rust-asm/ crate (build-std supplies `core`) so the ONLY
+# possible failure is asm! support itself, not a missing-core false negative.
+( cd "$HERE/rust-asm" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/ar.err" 2>&1 )
+rc=$?
+if grep -q 'inline assembly is unsupported on this target' "$B/ar.err"; then
+  echo "  rust inline-asm  : NO  (rust-mos#13: 'inline assembly is unsupported on this target')"
+else
+  echo "  rust inline-asm  : $(ok $rc)"
+fi
 
 echo "### interrupt handler attribute (clang) ###"
 printf '__attribute__((interrupt)) void isr(void){}\n' > "$B/i.c"
