@@ -1,0 +1,11 @@
+[package]
+name="sg_rs"
+version="0.0.0"
+edition="2024"
+[lib]
+crate-type=["staticlib"]
+path="src/lib.rs"
+[profile.release]
+panic="abort"
+opt-level="s"
+lto=true

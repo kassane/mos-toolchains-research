@@ -73,10 +73,12 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    indirectly (`byval`/`ptr`), so a small struct passed by value corrupts across
    that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
    agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
-8. **Debug builds need care:** Zig `-ODebug` fails on overflow-checked ops
-   (`@llvm.returnaddress` not legalizable) — use wrapping ops or a release mode;
-   Rust dev profile fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm
-   works in clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10, docs/12.
+8. **Debug builds & runtime safety:** Zig `-ODebug` fails on overflow-checked ops
+   (`@llvm.returnaddress` not legalizable) and `-OReleaseSafe` **segfaults the Zig
+   compiler** — so Zig's runtime safety is unavailable on MOS; use a no-safety
+   release mode. Rust's runtime bounds-check *does* work (panic=abort traps,
+   docs/12). Rust dev profile fails the G_UCMP gap — use `lto=true`+`debug=2`.
+   Inline asm works in clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10,12,15.
 9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
    `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
    and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are
@@ -91,11 +93,11 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 ## Repo map
 
 ```
-experiments/01..20   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..22   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
 docs/00..14          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
                      types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /
-                     byval+scalar / features / stdlib+math(+mmio-hal) / embed+reflection
+                     byval+scalar / features / stdlib+math(+mmio-hal) / embed+reflection  (safety→12, raii→08)
 Research.md HANDOFF.md  headline write-up / status
 ```
 

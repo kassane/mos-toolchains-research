@@ -55,3 +55,28 @@ baseline exactly, and the higher-order call inlines away in every language. The
 only "cost" seen is Rust's slice/iterator scaffolding, not dispatch overhead.
 (Compare exp 05, where the *same explicit loop* still differs across frontends —
 so "zero-cost vs C" is a per-abstraction property, not a blanket guarantee.)
+
+## RAII & scope guards — zero-cost deterministic cleanup (exp 22)
+
+Another zero-cost abstraction: scope-bound cleanup. Each language registers two
+cleanups (`trace('1')` then `trace('2')`); LIFO ⇒ the trace reads `"21"`, run on
+`mos-sim`:
+
+| C | C++ | Rust | D | Zig |
+|---|-----|------|---|-----|
+| `__attribute__((cleanup))` | `~Guard()` | `Drop` | `scope(exit)` / `~this()` | `defer` |
+
+All five fire in reverse order at scope exit. **Zero-cost:** the cleanups lower
+to direct calls at scope end (inlinable), with **no `.eh_frame`/unwind sections**
+— and MOS has no CFI/unwinding (docs/10), so the exceptional path doesn't exist;
+only normal-path RAII, which is free.
+
+Error-path cleanup diverges: **Zig `errdefer`** runs only on an error return
+(`errdefer comptime unreachable;` asserts no fallible op follows); **Rust** has no
+`defer`/`errdefer` (it uses `?`+`Result`+`Drop`); and **D `scope(success)`/
+`scope(failure)` are rejected in `-betterC`** (`cannot be used with
+-fno-exceptions`), leaving only `scope(exit)`. D extras (all betterC on MOS):
+`extern(C++, class)` struct RAII (C++ Itanium mangling; `init(typeof(null))` as
+the *acquire* half + `~this()` *release* → `"++21"`), `alias this` subtyping
+(structs have no inheritance), and move-semantics `@disable this(this)`
+(non-copyable) / `@disable this()` (no default ctor) — ownership-safe guards.

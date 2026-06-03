@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 20 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 22 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -86,6 +86,8 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 18 | `embed-file` | Compile-time file embedding 6 ways (`#embed`/`include_bytes!`/`import`/`@embedFile`/`.incbin`) → identical bytes |
 | 19 | `reflection` | Compile-time reflection: D & Zig enumerate fields/names; C/C++/Rust manage only `sizeof` |
 | 20 | `mmio-hal` | MMIO register parity (mos-hardware/mega65-libc pattern): all 5 frontends emit identical `sta $fff9` |
+| 21 | `safety` | `@safe`/borrow rejection battery (D & Rust) vs C (none); runtime bounds check: Rust traps, Zig unbuildable |
+| 22 | `raii-scopeguard` | Scope-guard/RAII LIFO cleanup in all 5 (zero-cost); Zig `errdefer`, D move-semantics & `extern(C++,class)` |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

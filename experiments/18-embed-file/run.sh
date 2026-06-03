@@ -20,12 +20,13 @@ RSA="$(find "$HERE/rust/target" -name 'libembed_rs.a'|head -1)"; [ -n "$RSA" ] |
 cp "$RSA" "$B/librs.a"
 
 # mos-sim has NO filesystem, so a correct runtime byte-sum can only come from
-# bytes embedded at COMPILE time. (At -Os the sum even const-folds to 528, since
-# the payload is known at compile time -- embedding composes with CTFE.)
+# bytes embedded at COMPILE time. (At -Os the sum even const-folds to the literal,
+# since the payload is known at compile time -- embedding composes with CTFE.)
 
 # asm-inline .incbin (the SDK's NES-mapper config technique; -I resolves the file)
 "$SDKBIN/mos-sim-clang" -std=c23 -mcpu=$CPU -Os -I"$HERE" -c "$HERE/embed_incbin.c" -o "$B/incbin.o"
-"$SDKBIN/mos-sim-clang" -mcpu=$CPU -Os -I"$HERE" -c "$HERE/driver.c" -o "$B/driver.o"
+SUM=$(python3 -c "print(sum(open('$HERE/payload.bin','rb').read()) & 0xffff)")
+"$SDKBIN/mos-sim-clang" -mcpu=$CPU -Os -DEXPECT=$SUM -I"$HERE" -c "$HERE/driver.c" -o "$B/driver.o"
 "$SDKBIN/mos-sim-clang" -Os "$B/driver.o" "$B/c.o" "$B/cpp.o" "$B/d.o" "$B/zig.o" "$B/librs.a" "$B/incbin.o" -o "$B/embed.elf"
 set +e; "$SDKBIN/mos-sim" "$B/embed.elf"; RC=$?; set -e
 echo "### exit=$RC (0 = all 6 embed methods produced identical bytes at compile time) ###"

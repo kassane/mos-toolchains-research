@@ -16,6 +16,13 @@ experiments that execute on `mos-sim`.
       C/C++/Rust only `sizeof` (P2996 not in clang 23; Rust = build-time macro) (exp 19).
 - [x] MMIO HAL parity (mos-hardware/mega65-libc pattern): all 5 frontends emit
       identical `sta $fff9` for a volatile register poke (exp 20).
+- [x] Memory safety (exp 21): compile-time `@safe`/borrow rejection battery (D
+      rejects 6/7, Rust all; C none) + escape analysis on MOS; runtime bounds
+      check — Rust traps (exit 77), Zig `ReleaseSafe` segfaults the compiler.
+- [x] RAII / scope guards (exp 22): LIFO cleanup in all 5 (zero-cost, no unwind);
+      Zig `errdefer` (error-path only); D `scope(exit)` + `~this()` +
+      `extern(C++,class)` RAII + move-semantics (`@disable this(this)`/`this()`);
+      D `scope(success/failure)` rejected in betterC.
 - [x] Shared datalayout proven across all 4 frontends (exp 01).
 - [x] 5-language FFI binary links (0 undef) and runs on mos-sim, with D→Rust and
       Zig→C cross-calls (exp 02).

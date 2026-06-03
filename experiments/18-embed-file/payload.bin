@@ -1,2 +1,2 @@
-	
- 
+mos-research-ai :: cross-language FFI on llvm-mos-sdk v23.0.1
+C C++ Rust D Zig embed the same bytes on the 6502.

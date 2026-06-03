@@ -31,3 +31,28 @@ Highlights:
 
 These are compile-time capabilities; for the *runtime* ABI behavior of the
 features that do compile, see docs/02, docs/11.
+
+## Memory safety (exp 21)
+
+The same unsafe-op rejection battery as the espressif repo, on MOS. D `@safe`
+(compiled `--mtriple=mos`) and Rust safe (target-independent rule) reject the
+same dangerous ops; C accepts everything:
+
+| op | D `@safe` | Rust | C |
+|---|:--:|:--:|:--:|
+| pointer index / arithmetic | ❌ | ❌ | ✅ |
+| int→ptr cast + deref | ❌ | ❌ | ✅ |
+| same-size ptr reinterpret | ✅ accept | (unsafe) | ✅ |
+| call `@system`/`unsafe` fn | ❌ | ❌ | ✅ |
+| inline asm · union pun | ❌ | ❌ | ✅ |
+
+D `@safe` rejects **6/7** (gap = same-size reinterpret, Rust needs `unsafe` too).
+Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both reject
+`return &local`. **C/C++ have no compile-time memory safety.**
+
+**Runtime** safety (OOB index `a[5]` on a length-3 array, run on `mos-sim`):
+**Rust's bounds check fires** — panic → `abort` → exit 77; **C** reads OOB (UB);
+**Zig `ReleaseSafe` *segfaults the compiler*** on MOS (the safety+panic codegen
+path is broken — `-ODebug` also fails on `@llvm.returnaddress`). So **Rust is the
+only frontend with working runtime memory safety on the 6502**; for the
+compile-time half, D `@safe` ≈ Rust safe.
