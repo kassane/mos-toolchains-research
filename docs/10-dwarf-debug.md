@@ -57,13 +57,17 @@ documented effort to add it.
   `DW_CFA_def_cfa_expression` / `DW_CFA_expression` / `DW_CFA_val_expression`. So
   the soft/static-stack model *does* have a workable CFA description.
 - **[PR #519](https://github.com/llvm-mos/llvm-mos/pull/519)** (Dec 2025)
-  implemented CFI emission in `MOSFrameLowering`, `.debug_frame` GC in LLD, and an
-  LLDB MOS ABI **unwind** plugin (DWARF numbers for A/X/Y/S/P/PC + imaginary
-  registers). It was **closed only to be split into smaller PRs** (maintainer:
-  "it will go smaller and smaller until eventually landed") — *not* rejected on
-  feasibility. Enabling fixes have merged (#535 legalizer terminal actions for
-  debug builds, #540 RS8 spill scratch, the lldb-side #521/#522/#524), but the
-  **CFI-emission core is not yet merged**, so the pinned SDK still emits none.
+  implemented CFI emission in `MOSFrameLowering` (+ a `getFrameIndexReference` frame
+  base), a DWARF register numbering for A/X/Y/S/P/PC + the imaginary registers
+  (RC0–255 / RS0–127), `.debug_frame` GC in LLD (mirroring the `.eh_frame` logic),
+  and an LLDB MOS ABI **unwind** plugin. It was **closed only to be split into
+  smaller PRs** (maintainer: "it will go smaller and smaller until eventually
+  landed") — *not* rejected on feasibility. But the split has since **stalled**:
+  only infra/consumer pieces merged (legalizer terminal actions #535, return/frame-
+  address `i32`-depth IR #536, RS8 spill scratch #540, jump-table test #538,
+  asm-parser #542/#543, lldb-side #521/#522/#524), the last activity was #537
+  (Jan 2026), and the **CFI-emission `.debug_frame` core was never resubmitted** —
+  so the pinned SDK still emits none (re-verified June 2026 against a `-g` build).
 
 ## Two debug-build gaps (both still live on the pinned toolchains)
 
@@ -99,6 +103,7 @@ GDB-remote stub** (MAME) as the source-level path.
 Debug info is broadly at parity — every frontend emits inspectable DWARF with line
 tables and parameter DIEs, *usable* for runtime→source on `mos-sim` — but expect a
 **DWARF 4/5 mix**, a deliberate (lldb-compensated) **`addr_size = 4`**, and **no
-CFI / no unwinding today**. The no-CFI gap is being actively closed upstream
-(designed dual-stack CFA + PR #519 splitting into merges), so it is a *not-yet*.
+CFI / no unwinding today**. The no-CFI gap has a designed path upstream (dual-stack
+CFA + PR #519), so it is a *not-yet* rather than a *can't* — though that split
+stalled after Jan 2026 with the CFI core unmerged, so don't expect it imminently.
 Symbolic + dynamic debugging work now; CFI-based backtraces do not.
