@@ -1,0 +1,69 @@
+# 07 — Upstream issues & references
+
+The issue trail behind this repo's findings (researched from the GitHub HTML, not
+the rate-limited API). Where an issue maps to one of our experiments, it's noted.
+
+## llvm-mos / llvm-mos-sdk (the backend)
+
+- C calling convention & imaginary registers — the shared ABI we rely on (docs/02).
+  Backend uses **GlobalISel**; not upstreamed to LLVM (~22k-line diff; LLVM core
+  rejects 8-bit targets).
+- `#10` Floating-point support — soft-float, incomplete → we keep floats out of the
+  FFI matrix.
+- `#66` interrupt attributes (`interrupt`, `interrupt_norecurse`, `no_isr`); `#459`
+  CBM interrupt codegen still rough.
+- `#249` optimizer can't see through function pointers; `#222` PIC limited.
+- `#229`/`#68`/`#122`/`#127` calling-convention evolution → **no ABI-stability
+  promise**; pin a toolchain (our headline caveat).
+- SDK v23.0.1 = LLVM 23 line; ships `mos-sim` and 42 platform drivers (docs/01).
+
+## rust-mos (mrk-its/rust-mos)
+
+- Target `mos-unknown-none`: `c_int_width=16`, `panic=Abort`, `requires_lto=true`,
+  8-bit atomics, `cpu=mos6502` hard-coded. **Not upstream** in rustc.
+- `#35` `c_uint`/`c_int` width regressed 16→32 on a build — the FFI hazard our
+  exp 03 measures (here Rust `c_int` is correctly **16-bit**).
+- `#13` calling a fixed ROM address miscompiled the `JSR`; **inline `asm!` is
+  unsupported** on MOS → workaround via fixed-address fn pointers.
+- `#26` `build-std` vs `compiler-builtins` undefined `precondition_check` at link.
+- `#21` the fork carries a patched `compiler-builtins` + `cargo` — the maintenance
+  burden that keeps it downstream.
+- Our own observation (exp 07/01): native `core` codegen hits
+  `unable to legalize G_UCMP` in `Ord::cmp`; `lto = true` is the workaround.
+
+## ldc2 / LDC (D)
+
+- **`ldc-developers/ldc#4919`** "Missing default LLVM cpu-features in some targets"
+  — **about wasm32, not MOS** (the task premise was slightly off). It documents the
+  same `-mcpu`/`-mattr`/`-vv` mechanism we exercise; on MOS the empty feature
+  string is benign (docs/06).
+- `#4466` (draft) make `size_t`/`ptrdiff_t` match pointer size on 8/16-bit targets —
+  the fix for the old wide-`size_t` problem; effectively present in LDC 1.42 (our D
+  `size_t` is 2 bytes, exp 03).
+- `#2520` 16-bit bounds-check `ICmp` type-mismatch (MSP430) — same 16-bit-target
+  family. `#2194` (merged) original MSP430 / 16-bit support that 8/16-bit targets
+  build on.
+- D on MOS is **`-betterC` only**; no druntime/Phobos.
+
+## kassane/dlang-mos-hello-world
+
+- **`#1` "Struct size mismatch for mos6502"** — LDC emitted struct length/`size_t`
+  as `i32` while Zig used `i16`. Marked `wontfix` then; **resolved by LDC 1.42**
+  (exp 03 shows D `size_t` == 2 == pointer). Root cause was the historical
+  `size_t ≥ 32-bit` frontend rule (ldc#4466). The same repo demonstrates the D→C
+  build pattern we mirror: `-betterC`, `-mtriple=mos`, link via `-gcc=mos-*-clang
+  -linker=lld`, FFI through ImportC.
+
+## References
+
+- llvm-mos backend & SDK: https://github.com/llvm-mos/llvm-mos ·
+  https://github.com/llvm-mos/llvm-mos-sdk (v23.0.1)
+- rust-mos: https://github.com/mrk-its/rust-mos
+- LDC issue 4919: https://github.com/ldc-developers/ldc/issues/4919
+- dlang-mos-hello-world #1: https://github.com/kassane/dlang-mos-hello-world/issues/1
+- zig-mos: https://github.com/kassane/zig-mos-bootstrap ·
+  https://github.com/kassane/zig-mos-examples ·
+  https://kassane.github.io/blog/zig_mos_6502/
+- Toolchain tarballs used here are pinned in `scripts/setup.sh`.
+- Methodology mirrors https://github.com/kassane/espressif-toolchains-research
+  (the Xtensa/RISC-V sibling of this study).

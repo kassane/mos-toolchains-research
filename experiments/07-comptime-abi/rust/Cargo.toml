@@ -1,0 +1,12 @@
+[package]
+name="ct_rs"
+version="0.0.0"
+edition="2021"
+[lib]
+crate-type=["staticlib"]
+path="src/lib.rs"
+[profile.release]
+panic="abort"
+opt-level="s"
+lto=true   # REQUIRED: defers core codegen to link, dodging the G_UCMP
+           # GlobalISel legalization gap in core's Ord::cmp (see docs/02 ABI)
