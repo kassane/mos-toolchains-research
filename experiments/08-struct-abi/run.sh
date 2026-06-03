@@ -9,7 +9,7 @@ source "$HERE/../../scripts/env.sh"
 B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; CPU=mos6502
 "$SDKBIN/mos-sim-clang"   -mcpu=$CPU -Os -c "$HERE/p_c.c"   -I"$HERE" -o "$B/c.o"
 "$SDKBIN/mos-sim-clang++" -mcpu=$CPU -Os -fno-exceptions -fno-rtti -c "$HERE/p_cpp.cpp" -I"$HERE" -o "$B/cpp.o"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/p_d.d" -of="$B/d.o"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/p_d.d" -of="$B/d.o"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/zig.o" "$HERE/p_zig.zig"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >/dev/null 2>&1 )
 cp "$(find "$HERE/rust/target" -name 'libp_rs.a'|head -1)" "$B/librs.a"

@@ -8,7 +8,7 @@ source "$HERE/../../scripts/env.sh"
 B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; CPU=mos6502
 "$SDKBIN/mos-sim-clang"   -mcpu=$CPU -Os -fno-lto -c "$HERE/zc_c.c"   -I"$HERE" -o "$B/c.o"
 "$SDKBIN/mos-sim-clang++" -mcpu=$CPU -Os -fno-lto -fno-exceptions -fno-rtti -std=c++17 -c "$HERE/zc_cpp.cpp" -I"$HERE" -o "$B/cpp.o"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/zc_d.d" -of="$B/d.o"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/zc_d.d" -of="$B/d.o"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >/dev/null 2>&1 )
 cp "$(find "$HERE/rust/target" -name 'libzc_rs.a'|head -1)" "$B/librs.a"
 

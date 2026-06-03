@@ -25,7 +25,7 @@ commit them** (`.gitignore` guards `tools/`, `build/`, `target/`, `*.tar.xz`).
 | `$LDC` | **LDC 1.42.0** (DMD 2.112.1, LLVM **22**). D; `-betterC` only on MOS |
 | `$SDKBIN` | llvm-mos-sdk **v23.0.1** bin (clang **23**, `mos-*-clang` drivers, `ld.lld`, `mos-sim`) |
 | `$MOSCLANG`/`$MOSCXX` | raw `--target=mos` clang/clang++ (LLVM 23) |
-| `$RUSTC`/`$CARGO` | rust-mos **1.98.0-dev** (LLVM **23**), target `mos-unknown-none` |
+| `$RUSTC`/`$CARGO` | rust-mos **1.87.0-dev** (LLVM **23**), target `mos-unknown-none` |
 | `$MOS_MATTR` | `+mos6502,+mos-insns-6502,+mos-insns-6502bcd,+static-stack` — pass to LDC's `-mattr` |
 
 ## Build / run
@@ -77,14 +77,25 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    (`@llvm.returnaddress` not legalizable) — use wrapping ops or a release mode;
    Rust dev profile fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm
    works in clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10, docs/12.
+9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
+   `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
+   and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are
+   **not ported** ("unsupported system" / undefined `c_long`) — hand-declare
+   `extern(C) printf`. Rust gets `alloc::Vec` via a `#[global_allocator]` over
+   SDK `malloc`. C++ STL is a tiny subset (no `std::sort`).
+10. **All LDC calls pass `$LDC_PE`** (`-preview=all --edition=2025`). `-preview=all`
+   includes `-preview=safer`, which rejects accessing a module-level `@system`
+   var from a default-safe `extern(C)` fn — use a *local* `enum` for CTFE
+   constants, or annotate `@system`. (2026 edition is rejected by LDC 1.42.)
 
 ## Repo map
 
 ```
-experiments/01..14   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..17   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
-docs/00..12          support matrix / toolchains / ABI / ffi / ir-mixing / types+struct /
-                     codegen / issues / zero-cost / tmp-parity / dwarf / byval+scalar / features
+docs/00..13          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
+                     types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /
+                     byval+scalar / features / stdlib+math
 Research.md HANDOFF.md  headline write-up / status
 ```
 

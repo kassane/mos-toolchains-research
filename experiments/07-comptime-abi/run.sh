@@ -11,7 +11,7 @@ ok(){ printf "  %-5s compile-time assertions: PASS\n" "$1"; }
 # set -e aborts on any failed compile (a failed compile-time assertion).
 "$SDKBIN/mos-sim-clang"   -mcpu=$CPU -std=c11 -Os -c "$HERE/ct_c.c"     -o "$B/c.o";   ok C
 "$SDKBIN/mos-sim-clang++" -mcpu=$CPU -Os -fno-exceptions -fno-rtti -c "$HERE/ct_cpp.cpp" -o "$B/cpp.o"; ok C++
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/ct_d.d" -of="$B/d.o"; ok D
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/ct_d.d" -of="$B/d.o"; ok D
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/zig.o" "$HERE/ct_zig.zig"; ok Zig
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >/dev/null 2>&1 ); ok Rust
 echo "  each frontend asserts its OWN true sizes at compile time; the contrast"

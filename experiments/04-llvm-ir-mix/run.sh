@@ -13,7 +13,7 @@ CLANG="$SDKBIN/mos-sim-clang"; SIM="$SDKBIN/mos-sim"
 
 echo "### 1. emit textual LLVM IR from each frontend ###"
 "$MOSCLANG" --target=mos -mcpu=$CPU -Oz -S -emit-llvm -ffreestanding "$HERE/step_c.c" -o "$B/c.ll"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -output-ll -of="$B/d.ll" -c "$HERE/step_d.d"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -output-ll -of="$B/d.ll" -c "$HERE/step_d.d"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -fno-emit-bin -femit-llvm-ir="$B/zig.ll" "$HERE/step_zig.zig"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" rustc --release -- --emit=llvm-ir >/dev/null 2>&1 )
 cp "$(find "$HERE/rust/target" -name 'step_rs*.ll' | head -1)" "$B/rs.ll"

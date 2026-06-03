@@ -37,6 +37,30 @@ __rc2`). Practical rule: **link with the newest toolchain in the mix** (the SDK 
 `mos-sim-clang`, LLVM 23) so it can ingest every cluster's bitcode, and rely on
 ELF objects (version-independent) when crossing clusters without LTO.
 
+## `zig cc` as the Rust linker hits exactly this wall (exp 17)
+
+A natural idea — use `zig cc -fno-sanitize=all -lunwind` as Rust's linker (it
+works on hosted targets) — does **not** work for Rust-on-MOS, and the failure is
+precisely the cluster boundary:
+
+- `zig cc -target mos-freestanding -c` **compiles** MOS objects fine (clang 22),
+  and zig's **LLVM-22 `ld.lld` links LLVM-23 *native ELF*** (the rust `.a` + a
+  native `crt0.o`) — getting as far as `undefined symbol: main`. Native ELF is
+  version-independent, so cross-cluster *object* linking is fine.
+- But the SDK's `libc.a` is **LLVM-23 bitcode**, so zig's LLVM-22 lld rejects it:
+  `ld.lld: error: libc.a(cxa-abi.cc.obj): Not an int attribute (Producer:
+  'LLVM23.0.0git' Reader: 'LLVM 22.0.0git')`.
+- zig also has **no MOS libc of its own**: `-lunwind` → `unable to provide libc
+  for target 'mos-freestanding-none'`, and a plain link tries to synthesize
+  libc/ubsan for MOS and fails (a Zig std `float.zig` 16-bit-`usize` bug);
+  `-fno-sanitize=all` is necessary to silence ubsan but not sufficient.
+- The SDK driver (`mos-sim-clang`, LLVM 23) links the *same* rust `.a` + `main`
+  into a runnable image (`rs_sub16(50,8)=42`).
+
+Verdict: link Rust-on-MOS with the **SDK's `mos-*-clang`** (LLVM 23, matches
+rust-mos and ships the platform runtime). `zig cc` can only be a linker here if
+the whole SDK is rebuilt as LLVM-22 native (the zig-mos-examples route).
+
 ## Cycles footnote
 
 In this pipeline the non-LTO and LTO builds tie at 9061 cycles — the step

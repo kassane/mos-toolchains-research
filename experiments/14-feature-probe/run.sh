@@ -14,7 +14,7 @@ printf 'void f(void){ __asm__ volatile("nop"); }\n' > "$B/a.c"
 printf 'export fn f() void { asm volatile ("nop"); }\n' > "$B/a.zig"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/az.o" "$B/a.zig" 2>/dev/null; echo "  zig inline-asm   : $(ok $?)"
 printf 'module a; extern(C) void f(){ asm { "nop"; } }\n' > "$B/a.d"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$B/a.d" -of="$B/ad.o" 2>/dev/null; echo "  ldc inline-asm   : $(ok $?)  (LDC uses LLVM-style asm; betterC)"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$B/a.d" -of="$B/ad.o" 2>/dev/null; echo "  ldc inline-asm   : $(ok $?)  (LDC uses LLVM-style asm; betterC)"
 # Rust: build via the rust-asm/ crate (build-std supplies `core`) so the ONLY
 # possible failure is asm! support itself, not a missing-core false negative.
 ( cd "$HERE/rust-asm" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/ar.err" 2>&1 )
@@ -44,7 +44,7 @@ printf 'module g; extern(C) ushort g(ushort a,ushort b){return cast(ushort)(a+b)
 printf 'export fn g(a:u16,b:u16)u16{return a+%%b;}\n' > "$B/g.zig"
 for cpu in mos65c02 mosw65816; do
   "$MOSCLANG" --target=mos -mcpu=$cpu -c "$B/g.c" -o "$B/g.o" 2>/dev/null; c=$?
-  "$LDC" -betterC -Oz -mtriple=mos -mcpu=$cpu -c "$B/g.d" -of="$B/gd.o" 2>/dev/null; d=$?
+  "$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$cpu -c "$B/g.d" -of="$B/gd.o" 2>/dev/null; d=$?
   "$ZIG" build-obj -target mos-freestanding -mcpu $cpu -OReleaseSmall -femit-bin="$B/gz.o" "$B/g.zig" 2>/dev/null; z=$?
   r=$( "$RUSTC" --print cfg --target mos-unknown-none -Ctarget-cpu=$cpu >/dev/null 2>&1; echo $? )
   printf "  %-9s clang=%s ldc=%s zig=%s rustc-accepts=%s\n" "$cpu" "$(ok $c)" "$(ok $d)" "$(ok $z)" "$(ok $r)"

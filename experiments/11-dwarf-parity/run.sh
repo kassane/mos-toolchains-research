@@ -25,7 +25,7 @@ report(){ printf "  %-6s DWARFv%-2s addr_size=%-2s CFI=%-3s subprogram=%-12s\n  
 echo "### C (clang) ###"
 "$MOSCLANG" --target=mos -mcpu=$CPU -g -O0 -c "$HERE/dbg.c" -o "$B/c.o"; report C "$B/c.o"
 echo "### D (LDC) ###"
-"$LDC" -betterC -g -O0 -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/dbg.d" -of="$B/d.o"; report D "$B/d.o"
+"$LDC" -betterC $LDC_PE -g -O0 -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/dbg.d" -of="$B/d.o"; report D "$B/d.o"
 echo "### Rust (rust-mos; needs lto+debug=2, dev profile fails the G_UCMP gap) ###"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/rust-build.log" 2>&1 ) \
   || echo "  Rust  BUILD FAILED (see build/rust-build.log)"

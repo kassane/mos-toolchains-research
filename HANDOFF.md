@@ -6,8 +6,9 @@ experiments that execute on `mos-sim`.
 ## Done
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
-      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **14/14 experiments pass** (exit 0).
+      1.87 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **17/17 experiments pass** (exit 0).
+      All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`).
 - [x] Shared datalayout proven across all 4 frontends (exp 01).
 - [x] 5-language FFI binary links (0 undef) and runs on mos-sim, with D→Rust and
       Zig→C cross-calls (exp 02).
@@ -27,7 +28,15 @@ experiments that execute on `mos-sim`.
 - [x] Extended scalar/callback ABI (i64, signed, fn-pointer) shared by all 5 (exp 13).
 - [x] Feature/capability probe: inline-asm (rust ✗), interrupts, atomics(8-bit),
       multi-CPU 65c02/w65816, SIMD ✗ (exp 14).
-- [x] Docs `00..12`, README, Research, CLAUDE.
+- [x] Stdlib reach + float math (exp 15): C libc / C++ STL subset (no sort) / Zig
+      std (richest: mem,sort,fmt,meta,math) / Rust `alloc::Vec` / D core.stdc+ldc.
+      Float `sqrt`: Zig `std.math` & D `core.math` ✓; C `<math.h>` & no_std Rust ✗.
+- [x] Real-world mos-sim I/O (exp 16): interactive stdin filter (libc getchar +
+      Zig FFI) + heap malloc + `$FFF0` cycle counting.
+- [x] `zig cc` as Rust linker (exp 17): compiles MOS objs, links native LLVM-23
+      ELF, but the SDK's LLVM-23 *bitcode* libc trips zig's LLVM-22 lld (cluster
+      wall); use the SDK driver. Documented in docs/04.
+- [x] Docs `00..13`, README, Research, CLAUDE. rust-mos version noted as 1.87.
 
 ## Key results (the numbers a reviewer will check)
 

@@ -21,14 +21,22 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
   (exp 03, 05, 07, 08). Pass fixed-width scalars or byte-aligned structs.
 - **IRs mix across LLVM versions.** The LLVM-23 toolchain (SDK, Rust) consumes
   LLVM-22 textual IR from D and Zig and links/LTOs it into a running binary
-  (exp 04). Two version clusters, one for bitcode, but ELF is universal.
+  (exp 04). Two version clusters, one for bitcode, but ELF is universal —
+  `zig cc` can't be the Rust linker because it trips that wall on the SDK's
+  bitcode libc (exp 17).
+- **Stdlib reach is uneven, and float math inverts the usual order** (docs/13):
+  Zig `std` is richest (mem/sort/fmt/meta/math), Rust adds `alloc::Vec` via a
+  global allocator, C has full libc but the C++ STL is a stub (no `std::sort`),
+  and **only Zig (`std.math`) and D (`core.math`) compute `sqrt` on MOS** — C's
+  `<math.h>` and `no_std` Rust can't. mos-sim runs real interactive stdin I/O
+  (exp 16).
 
 ## 1. The shared substrate (exp 01)
 
 A trivial `add(i32,i32)` compiled by each frontend produces the same
 `target datalayout`. That single fact is why FFI is even possible: identical
 pointer width, integer/aggregate alignment and endianness across clang 23,
-rustc 1.98 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 22). The MOS C
+rustc 1.87 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 22). The MOS C
 calling convention lives in the backend (zero-page "imaginary registers"
 `__rc0..31` / `__rs0..15`; args in A/X then RC2.., pointers in RS1.., aggregates
 >4 bytes by hidden pointer), so every frontend that lowers to this backend

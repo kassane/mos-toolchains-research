@@ -7,7 +7,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../../scripts/env.sh"
 B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; CPU=mos6502
 "$MOSCLANG" --target=mos -mcpu=$CPU -Oz -S -emit-llvm -ffreestanding -nostdlib "$HERE/add.c" -o "$B/add_c.ll"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -output-ll -of="$B/add_d.ll" -c "$HERE/add.d"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -output-ll -of="$B/add_d.ll" -c "$HERE/add.d"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -fno-emit-bin -femit-llvm-ir="$B/add_zig.ll" "$HERE/add.zig"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" rustc --release -- --emit=llvm-ir >/dev/null 2>&1 )
 cp "$(find "$HERE/rust/target" -name 'add_rs*.ll'|head -1)" "$B/add_rs.ll"

@@ -8,7 +8,7 @@ source "$HERE/../../scripts/env.sh"
 B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; CPU=mos6502
 "$SDKBIN/mos-sim-clang"   -mcpu=$CPU -Os -c "$HERE/ext_c.c"   -I"$HERE" -o "$B/c.o"
 "$SDKBIN/mos-sim-clang++" -mcpu=$CPU -Os -fno-exceptions -fno-rtti -c "$HERE/ext_cpp.cpp" -I"$HERE" -o "$B/cpp.o"
-"$LDC" -betterC -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/ext_d.d" -of="$B/d.o"
+"$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/ext_d.d" -of="$B/d.o"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/zig.o" "$HERE/ext_zig.zig"
 ( cd "$HERE/rust" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/rust-build.log" 2>&1 ) \
   || { echo "rust build failed (see $B/rust-build.log):"; tail -5 "$B/rust-build.log"; exit 1; }

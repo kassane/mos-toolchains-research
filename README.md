@@ -34,7 +34,7 @@ evidence. Toolchain quirks worth knowing up front are in **[CLAUDE.md](CLAUDE.md
 | Lang | Toolchain | Version | LLVM | Triple / CPU |
 |------|-----------|---------|------|--------------|
 | C / C++ | LLVM-MOS SDK | clang **23.0.0git** | **23** | `--target=mos -mcpu=mos6502` |
-| Rust | Rust-MOS | rustc **1.98.0-dev** | **23** | `--target mos-unknown-none -Ctarget-cpu=mos6502` |
+| Rust | Rust-MOS | rustc **1.87.0-dev** | **23** | `--target mos-unknown-none -Ctarget-cpu=mos6502` |
 | Zig | Zig-MOS | **0.17.0-mos-dev** | **22** | `-target mos-freestanding -mcpu mos6502` |
 | D | LDC2-MOS | LDC **1.42.0-dev** (DMD 2.112.1) | **22** | `--mtriple=mos -mcpu=mos6502 -mattr=…` |
 
@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 14 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 17 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -80,6 +80,9 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 12 | `byval-struct` | By-value struct ABI **hole**: C/C++/Zig decompose ≤4B; Rust/D pass indirect → garbage |
 | 13 | `scalar-callback-abi` | i64 round-trip, signed negate, function-pointer callbacks: shared across all 5 |
 | 14 | `feature-probe` | Capability matrix: inline-asm (rust ✗), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
+| 15 | `std-support` | Stdlib reach: C libc, C++ STL subset, Zig std (richest), Rust `alloc::Vec`, D core.stdc+ldc |
+| 16 | `mos-sim-realworld` | Interactive stdin→stdout filter (libc `getchar` + Zig FFI uppercase) + `$FFF0` cycles |
+| 17 | `zigcc-rust-linker` | `zig cc` as Rust's linker: compiles MOS objs but hits the LLVM-22/23 bitcode cluster wall |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

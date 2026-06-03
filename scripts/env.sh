@@ -38,3 +38,7 @@ export MOS_CPU=mos6502
 # invocations pass -mattr=$MOS_MATTR explicitly. Spelling lifted verbatim from
 # Zig's emitted IR target-features (experiments/06-cpu-features).
 export MOS_MATTR='+mos6502,+mos-insns-6502,+mos-insns-6502bcd,+static-stack'
+# Canonical LDC preview/edition bundle (mirrors the espressif repo's $LDC_PE).
+# -preview=all turns on dip1000/bitfields/etc.; --edition=2025 is the newest D
+# edition LDC 1.42 accepts (2026 is rejected). Every LDC call passes $LDC_PE.
+export LDC_PE='-preview=all --edition=2025'

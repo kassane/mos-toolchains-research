@@ -15,7 +15,7 @@ build(){ # opt suffix
   local O="$1" s="$2"
   "$SDKBIN/mos-sim-clang"   -mcpu=$CPU $O -fno-lto -c "$HERE/tmp_c.c"   -I"$HERE" -o "$B/c$s.o"
   "$SDKBIN/mos-sim-clang++" -mcpu=$CPU $O -fno-lto -fno-exceptions -fno-rtti $CXXSTD -c "$HERE/tmp_cpp.cpp" -I"$HERE" -o "$B/cpp$s.o"
-  "$LDC" -betterC $O -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/tmp_d.d" -of="$B/d$s.o"
+  "$LDC" -betterC $LDC_PE $O -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/tmp_d.d" -of="$B/d$s.o"
 }
 folded(){ # obj sym
   "$SDKBIN/llvm-objdump" -d --mcpu=$CPU "$1" 2>/dev/null \
