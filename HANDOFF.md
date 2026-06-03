@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **8/8 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **10/10 experiments pass** (exit 0).
 - [x] Shared datalayout proven across all 4 frontends (exp 01).
 - [x] 5-language FFI binary links (0 undef) and runs on mos-sim, with D→Rust and
       Zig→C cross-calls (exp 02).
@@ -16,7 +16,11 @@ experiments that execute on `mos-sim`.
 - [x] Codegen/cycle comparison (exp 05); `ldc -mattr` parity (exp 06).
 - [x] Struct-ABI hole (Zig over-alignment) reproduced + fixed; zero-page address
       space incl. `@addrSpaceCast` from a 16-bit pointer (exp 08).
-- [x] Docs `00..07`, README, Research, CLAUDE.
+- [x] Zero-cost abstractions: C++ template ties C, lambdas/closures inline away;
+      Rust slice-sum heavier but still static dispatch (exp 09).
+- [x] TMP / CTFE parity: constexpr/consteval/CTFE/const-fn fold at `-O0`
+      (language guarantee), C doesn't; D introspection strongest (exp 10).
+- [x] Docs `00..09`, README, Research, CLAUDE.
 
 ## Key results (the numbers a reviewer will check)
 

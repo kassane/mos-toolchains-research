@@ -72,6 +72,8 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 06 | `cpu-features` | `ldc -mcpu` leaves features empty (ldc#4919 class); `-mattr` is benign for base mos6502 |
 | 07 | `comptime-abi` | Compile-time ABI assertions; C/D/Rust byte-align vs Zig natural-align |
 | 08 | `struct-abi` | Struct round-trip: Zig `extern struct` corrupts (over-aligns); `align(1)` fixes it; zero-page AS |
+| 09 | `zero-cost` | Monomorphized generic + higher-order callable: C++ ties C exactly, lambdas inline away |
+| 10 | `tmp-parity` | factorial(10) via constexpr/consteval/CTFE/const-fn folds at `-O0` (lang guarantee); C doesn't |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

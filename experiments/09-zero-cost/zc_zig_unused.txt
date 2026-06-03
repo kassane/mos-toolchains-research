@@ -1,0 +1,3 @@
+(Zig omitted from zero-cost: comptime generics differ enough in spelling that a
+fair "same source" comparison is C++/D/Rust + C baseline. Zig's monomorphization
+is covered structurally by exp 05's identical-loop cycle table.)
