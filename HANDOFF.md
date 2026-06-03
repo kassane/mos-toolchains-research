@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **10/10 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **14/14 experiments pass** (exit 0).
 - [x] Shared datalayout proven across all 4 frontends (exp 01).
 - [x] 5-language FFI binary links (0 undef) and runs on mos-sim, with D→Rust and
       Zig→C cross-calls (exp 02).
@@ -20,7 +20,14 @@ experiments that execute on `mos-sim`.
       Rust slice-sum heavier but still static dispatch (exp 09).
 - [x] TMP / CTFE parity: constexpr/consteval/CTFE/const-fn fold at `-O0`
       (language guarantee), C doesn't; D introspection strongest (exp 10).
-- [x] Docs `00..09`, README, Research, CLAUDE.
+- [x] DWARF/debug parity (objdump/dwarfdump/readelf): clang=DWARF5, others=DWARF4,
+      all addr_size=4, no CFI; Zig-Debug & Rust-dev build gaps (exp 11).
+- [x] By-value struct ABI **hole** found by IR reverse-engineering: C/C++/Zig
+      decompose ≤4B structs to registers, Rust/D pass indirect → garbage (exp 12).
+- [x] Extended scalar/callback ABI (i64, signed, fn-pointer) shared by all 5 (exp 13).
+- [x] Feature/capability probe: inline-asm (rust ✗), interrupts, atomics(8-bit),
+      multi-CPU 65c02/w65816, SIMD ✗ (exp 14).
+- [x] Docs `00..12`, README, Research, CLAUDE.
 
 ## Key results (the numbers a reviewer will check)
 
@@ -30,6 +37,9 @@ experiments that execute on `mos-sim`.
 | FFI matrix | mos-sim exit 0, 0 undefined symbols, ELF e_machine `0x1966` |
 | `int` width | C 2 / D 4 / Rust i32 4 / Zig i32 4; Zig `c_int` 4 (≠ C 2); Rust `c_int` 2 |
 | struct `{u8,u32,u8}` | C/C++/Rust/D/Zig-align1 = 6 B ok; Zig plain = 12 B garbage |
+| by-value small struct | C/C++/Zig decompose→registers; Rust/D indirect→garbage (exp 12) |
+| i64/signed/callback | shared across all 5 (exp 13) |
+| DWARF | clang v5, LDC/Rust/Zig v4, addr_size=4, no CFI (exp 11) |
 | same loop | identical result 14836; cycles C 191272 … Zig 111055 |
 
 ## Known limitations / gaps (honest)

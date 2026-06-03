@@ -21,6 +21,8 @@ export LLC="$SDKBIN/llc"
 export OBJDUMP="$SDKBIN/llvm-objdump"
 export NM="$SDKBIN/llvm-nm"
 export READOBJ="$SDKBIN/llvm-readobj"
+export READELF="$SDKBIN/llvm-readelf"
+export DWARFDUMP="$SDKBIN/llvm-dwarfdump"
 export SIZE="$SDKBIN/llvm-size"
 # rust-mos 1.98.0-dev (LLVM 23, glibc build)
 export RUSTBIN="$TOOLS/rust/rust-mos-x86_64-linux-glibc/bin"

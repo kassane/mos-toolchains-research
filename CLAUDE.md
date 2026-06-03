@@ -68,14 +68,23 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    exceptions, TypeInfo, dynamic/associative arrays. `extern(C)` for FFI; LDC
    predefines `version(MOS6502)`. D `size_t` is fixed to 2 bytes in LDC 1.42
    (the old dlang-mos-hello-world#1 `i32` bug is gone, docs/07).
+7. **By-value structs ≤4 bytes are NOT FFI-safe between {C,C++,Zig} and {Rust,D}.**
+   clang/Zig decompose them into registers (the MOS C ABI); Rust/D pass them
+   indirectly (`byval`/`ptr`), so a small struct passed by value corrupts across
+   that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
+   agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
+8. **Debug builds need care:** Zig `-ODebug` fails on overflow-checked ops
+   (`@llvm.returnaddress` not legalizable) — use wrapping ops or a release mode;
+   Rust dev profile fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm
+   works in clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10, docs/12.
 
 ## Repo map
 
 ```
-experiments/01..10   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..14   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
-docs/00..09          support matrix / toolchains / ABI / ffi / ir-mixing / types+struct /
-                     codegen / issues / zero-cost / tmp-parity
+docs/00..12          support matrix / toolchains / ABI / ffi / ir-mixing / types+struct /
+                     codegen / issues / zero-cost / tmp-parity / dwarf / byval+scalar / features
 Research.md HANDOFF.md  headline write-up / status
 ```
 

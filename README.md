@@ -14,15 +14,17 @@ The central question:
 Short answer, established empirically here (every claim is a re-runnable
 experiment that executes on the `mos-sim` 6502 simulator):
 
-> **Yes for scalars, pointers and callbacks — five co-linkable language objects
-> (C, C++, Rust, D, and Zig) share one C ABI and run correctly in a single
-> 6502 binary (`experiments/02`).** The holes are at the *type* level, not the
-> call level: the keyword `int` is 16-bit in C but 32-bit in D/Rust/Zig; Zig's
-> `c_int` is 32-bit (≠ C's 16-bit); and **Zig's `extern struct` over-aligns**
-> (`u32`→4-byte) so by-pointer structs corrupt across the boundary unless fields
-> are `align(1)`. C, clang-C++, Rust and D agree on the byte-packed MOS struct
-> layout; Zig is the outlier. **Fix: cross the boundary with fixed-width
-> scalars, or byte-aligned structs.**
+> **Yes for scalars (every width), pointers and callbacks — five co-linkable
+> language objects (C, C++, Rust, D, Zig) share one C ABI and run correctly in a
+> single 6502 binary (`experiments/02, 13`).** The holes are narrow and specific:
+> (1) *types* — the keyword `int` is 16-bit in C but 32-bit in D/Rust/Zig, and
+> Zig's `c_int` is 32-bit (≠ C's 16-bit); (2) *struct layout* — Zig's
+> `extern struct` over-aligns (`u32`→4-byte) so structs corrupt unless fields are
+> `align(1)`; (3) *one call-ABI corner* — **by-value structs ≤4 bytes split into
+> two camps**: C/C++/Zig decompose them into registers (the MOS C ABI) while
+> **Rust and D pass them indirectly**, so a by-value small struct corrupts across
+> that boundary (`experiments/12`). **Fix: cross the boundary with fixed-width
+> scalars, and pass aggregates by pointer (or keep them >4 bytes).**
 
 See **[Research.md](Research.md)** for the write-up and **[docs/](docs/)** for the
 evidence. Toolchain quirks worth knowing up front are in **[CLAUDE.md](CLAUDE.md)**.
@@ -53,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 8 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 14 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -74,6 +76,10 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 08 | `struct-abi` | Struct round-trip: Zig `extern struct` corrupts (over-aligns); `align(1)` fixes it; zero-page AS |
 | 09 | `zero-cost` | Monomorphized generic + higher-order callable: C++ ties C exactly, lambdas inline away |
 | 10 | `tmp-parity` | factorial(10) via constexpr/consteval/CTFE/const-fn folds at `-O0` (lang guarantee); C doesn't |
+| 11 | `dwarf-parity` | Debug info: clang=DWARF5, others=DWARF4, all addr_size=4, no CFI; Zig-Debug & Rust-dev gaps |
+| 12 | `byval-struct` | By-value struct ABI **hole**: C/C++/Zig decompose ≤4B; Rust/D pass indirect → garbage |
+| 13 | `scalar-callback-abi` | i64 round-trip, signed negate, function-pointer callbacks: shared across all 5 |
+| 14 | `feature-probe` | Capability matrix: inline-asm (rust ✗), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no
