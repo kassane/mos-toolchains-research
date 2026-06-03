@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 22 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 23 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -76,7 +76,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 08 | `struct-abi` | Struct round-trip: Zig `extern struct` corrupts (over-aligns); `align(1)` fixes it; zero-page AS |
 | 09 | `zero-cost` | Monomorphized generic + higher-order callable: C++ ties C exactly, lambdas inline away |
 | 10 | `tmp-parity` | factorial(10) via constexpr/consteval/CTFE/const-fn folds at `-O0` (lang guarantee); C doesn't |
-| 11 | `dwarf-parity` | Debug info: clang=DWARF5, others=DWARF4, all addr_size=4, no CFI; Zig-Debug & Rust-dev gaps |
+| 11 | `dwarf-parity` | Debug info: clang=DWARF5/others=DWARF4, addr_size=4 (deliberate), no CFI (unforceable; designed upstream); `returnaddress` gap both clusters; Rust-dev G_UCMP |
 | 12 | `byval-struct` | By-value struct ABI **hole**: C/C++/Zig decompose ≤4B; Rust/D pass indirect → garbage |
 | 13 | `scalar-callback-abi` | i64 round-trip, signed negate, function-pointer callbacks: shared across all 5 |
 | 14 | `feature-probe` | Capability matrix: inline-asm (rust ✗), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
@@ -88,6 +88,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 20 | `mmio-hal` | MMIO register parity (mos-hardware/mega65-libc pattern): all 5 frontends emit identical `sta $fff9` |
 | 21 | `safety` | `@safe`/borrow rejection battery (D & Rust) vs C (none); runtime bounds check: Rust traps, Zig traps w/ `mos_panic` (default handler crashes LLVM-22) |
 | 22 | `raii-scopeguard` | Scope-guard/RAII LIFO cleanup in all 5 (zero-cost); Zig `errdefer`, D move-semantics & `extern(C++,class)` |
+| 23 | `dynamic-debug` | Runtime PC→source on the sim: `mos-sim --profile`/`--trace` PCs symbolize back via `llvm-symbolizer` (DWARF line tables are usable) |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

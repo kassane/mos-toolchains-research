@@ -74,17 +74,20 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
    agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
 8. **Debug builds & runtime safety:** Zig `-ODebug` fails (`@llvm.returnaddress`;
-   plus an SSP stack-protector lowering failure — use a release mode).
-   `-OReleaseSafe` runtime safety (overflow **and** array-bounds) **works** but
-   needs a bare-metal panic handler: the **default/`FullPanic`** handler crashes
-   the LLVM-22 backend on bounds-check code (gdb: SIGSEGV in
-   `MachineCopyPropagation`/`CopyTracker::invalidateRegister`; `-fno-compiler-rt`
-   does NOT help — LLVM-22 bug, fixed in 23). Use the namespace-style `mos_panic`
-   handler from `kassane/zig-mos-examples` (`sdk/panic.zig`, trivial
-   `outOfBounds`→`while(true){}`) → ReleaseSafe traps cleanly (exp 21). Rust's
-   bounds-check works out of the box (panic=abort, LLVM-23); Rust dev profile
-   fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm works in
-   clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10,12.
+   plus an SSP stack-protector lowering failure — use a release mode). That
+   returnaddress legalize gap is **both clusters**: SDK clang 23 also can't lower
+   `__builtin_return_address(0)` (llvm-mos#536 fixed the i32-depth IR, not the
+   missing MOS lowering; exp 11). `-OReleaseSafe` runtime safety (overflow **and**
+   array-bounds) **works** but needs a bare-metal panic handler: the
+   **default/`FullPanic`** handler crashes the LLVM-22 backend on bounds-check code
+   (gdb: SIGSEGV in `MachineCopyPropagation`/`CopyTracker::invalidateRegister`;
+   `-fno-compiler-rt` does NOT help — an upstream LLVM MCP bug, llvm#167336, gone by
+   LLVM 23). Use the namespace-style `mos_panic` handler from
+   `kassane/zig-mos-examples` (`sdk/panic.zig`, trivial `outOfBounds`→`while(true){}`)
+   → ReleaseSafe traps cleanly (exp 21). Rust's bounds-check works out of the box
+   (panic=abort, LLVM-23); Rust dev profile fails the G_UCMP gap — use
+   `lto=true`+`debug=2`. Inline asm works in clang/Zig/LDC but **not Rust**
+   (rust-mos#13). docs/10,12.
 9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
    `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
    and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are
@@ -99,7 +102,7 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 ## Repo map
 
 ```
-experiments/01..22   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..23   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
 docs/00..14          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
                      types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /

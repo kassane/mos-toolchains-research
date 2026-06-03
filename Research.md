@@ -30,6 +30,12 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
   and **only Zig (`std.math`) and D (`core.math`) compute `sqrt` on MOS** — C's
   `<math.h>` and `no_std` Rust can't. mos-sim runs real interactive stdin I/O
   (exp 16).
+- **Debug info works; CFI doesn't — yet.** Every frontend emits inspectable DWARF
+  (clang v5, others v4; a deliberate `addr_size=4`), and the line tables are
+  *usable*: `mos-sim --profile`/`--trace` PCs round-trip to source through
+  `llvm-symbolizer` (exp 11, 23). But no frontend emits `.eh_frame`/`.debug_frame`
+  and it can't be forced; CFI-based unwinding is designed upstream (llvm-mos PR #519,
+  a dual-stack CFA) but not yet merged (docs/10).
 
 ## 1. The shared substrate (exp 01)
 

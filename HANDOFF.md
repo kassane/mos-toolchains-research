@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **22/22 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **23/23 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
@@ -39,7 +39,12 @@ experiments that execute on `mos-sim`.
 - [x] TMP / CTFE parity: constexpr/consteval/CTFE/const-fn fold at `-O0`
       (language guarantee), C doesn't; D introspection strongest (exp 10).
 - [x] DWARF/debug parity (objdump/dwarfdump/readelf): clang=DWARF5, others=DWARF4,
-      all addr_size=4, no CFI; Zig-Debug & Rust-dev build gaps (exp 11).
+      addr_size=4 (deliberate ELF-banking; lldb compensates), no CFI — and CFI is
+      **unforceable** (`-funwind-tables`/`-fexceptions` emit 0 `.cfi_`), though
+      designed upstream (PR #519, dual-stack CFA); `@llvm.returnaddress` has no MOS
+      lowering in **either** cluster; Zig-Debug & Rust-dev G_UCMP gaps (exp 11).
+- [x] Dynamic debug (exp 23): DWARF line tables are *usable* — `mos-sim --profile`/
+      `--trace` runtime PCs symbolize back to source via `llvm-symbolizer`/`addr2line`.
 - [x] By-value struct ABI **hole** found by IR reverse-engineering: C/C++/Zig
       decompose ≤4B structs to registers, Rust/D pass indirect → garbage (exp 12).
 - [x] Extended scalar/callback ABI (i64, signed, fn-pointer) shared by all 5 (exp 13).
@@ -77,14 +82,20 @@ experiments that execute on `mos-sim`.
 - **Zig↔C struct passing** only safe with `align(1)` fields; by-value large
   structs not stress-tested beyond the round-trip in exp 08.
 - **rust-mos `core` native codegen** trips `G_UCMP` legalization; worked around
-  with `lto = true`. Not all of `core`/`alloc` was exercised.
+  with `lto = true` (re-verified mid-2026: still fails without LTO on rust-mos
+  LLVM 23 — the upstream generic-legalize fix doesn't cover the MOS narrowing
+  path). Not all of `core`/`alloc` was exercised.
 - **`ldc#4919` premise** in the task was about wasm32, not MOS; recorded in docs/07.
 
 ## Next steps (if resumed)
 
 - Add a by-value (not by-pointer) struct-argument sweep across all 5 langs.
 - Add an interrupt-handler / inline-asm interop probe (`mos_interrupt`,
-  `__attribute__((no_isr))`); note Rust has no inline asm on MOS (rust-mos#13).
+  `__attribute__((no_isr))`); note Rust has no inline asm on MOS (rust-mos#13). The
+  SDK's `interrupt` attr emits `rti` + imaginary-reg save/restore — its own codegen
+  experiment (vs `interrupt_norecurse`/`no_isr`) would be high-signal.
 - Try a non-base CPU (`mosw65816`, `mos65c02`) end-to-end to see if `-mattr`
   starts to matter (exp 06 only covers base mos6502).
 - A C64 `.prg` build (mos-c64-clang) running in VICE for a hardware cross-check.
+- Re-check CFI once llvm-mos#519's split-out PRs land the `.debug_frame`/CFI core
+  (dual-stack CFA emission); demo `llvm-mlb` ELF→Mesen labels for source debug.

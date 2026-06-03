@@ -58,7 +58,8 @@ Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both rejec
   panic handler. The handler is the catch: the **default / `FullPanic`** handler
   crashes the LLVM-22 backend on the bounds-check code (gdb: **SIGSEGV in
   `MachineCopyPropagation` / `CopyTracker::invalidateRegister`**; `-fno-compiler-rt`
-  does *not* help — it's a backend bug, fixed in LLVM 23). The fix is the
+  does *not* help — an upstream LLVM `MachineCopyPropagation` bug, llvm#167336,
+  gone by LLVM 23). The fix is the
   namespace-style **`mos_panic`** handler from `kassane/zig-mos-examples`
   (`sdk/panic.zig`: trivial `outOfBounds`/`integerOverflow`/… → `while(true){}`,
   no formatting/`@returnAddress`). `pub const panic = @import("mos_panic")` →

@@ -6,7 +6,7 @@ set -uo pipefail   # not -e: we probe failures (Zig Debug) deliberately
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../../scripts/env.sh"
 B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; CPU=mos6502
-DD="$DWARFDUMP"; RE="$READELF"
+DD="$DWARFDUMP"; RE="$READELF"; bad=0
 
 dwver(){ "$DD" "$1" 2>/dev/null | grep -oE 'version = 0x000[0-9]' | head -1 | grep -oE '[0-9]$'; }
 secs(){ "$RE" -SW "$1" 2>/dev/null | grep -oE '\.debug[a-z_]*' | sort -u | tr '\n' ' '; }
@@ -44,12 +44,45 @@ else
   echo "  (the overflow-check panic handler uses @llvm.returnaddress; MOS GlobalISel can't legalize it)"
 fi
 
+echo "### CFI is structurally absent: forcing unwind-tables / exceptions emits none ###"
+# clang ACCEPTS -funwind-tables etc. on MOS but emits ZERO .cfi_ directives and no
+# .eh_frame/.debug_frame -- the backend has no CFI emission (upstream main's
+# MOSFrameLowering/MOSAsmPrinter emit no MCCFIInstruction; ExceptionsType=None).
+# CFI-based unwinding is *designed* (llvm-mos.org/wiki/DWARF_implementation_guide:
+# dual-stack CFA) and was proposed in PR #519 (closed only to be split up), but is
+# not yet merged -- so on the pinned SDK there is still no frame info, even forced.
+cfic(){ "$MOSCLANG" --target=mos -mcpu=$CPU "$@" -S "$HERE/dbg.c" -o - 2>/dev/null | grep -c '\.cfi_' || true; }
+for f in "-O0 -g" "-O0 -g -funwind-tables" "-O0 -g -fasynchronous-unwind-tables"; do
+  n="$(cfic $f)"; printf "  clang %-37s -> .cfi_ directives: %s\n" "[$f]" "$n"
+  [ "$n" = 0 ] || { echo "    UNEXPECTED: CFI emitted"; bad=$((bad+1)); }
+done
+printf 'int t(int a){ if(a<0) throw 1; return a; }\n' > "$B/exc.cpp"
+if "$MOSCXX" --target=mos -mcpu=$CPU -fexceptions -c "$B/exc.cpp" -o "$B/exc.o" 2>"$B/exc.err"; then
+  echo "  clang++ -fexceptions: UNEXPECTEDLY accepted"; bad=$((bad+1))
+else
+  echo "  clang++ -fexceptions: rejected ($(grep -oE 'exceptions disabled' "$B/exc.err" | head -1)) -> no unwinder on MOS"
+fi
+
+echo "### GAP: @llvm.returnaddress has no MOS lowering -- in BOTH LLVM clusters ###"
+# Zig (LLVM 22) shown above. The SDK's clang 23 also can't legalize it, despite
+# the i32-depth IR fix (llvm-mos#536): the intrinsic itself has no MOS lowering,
+# so __builtin_return_address / backtraces are unavailable on either cluster.
+printf 'void* ra(void){ return __builtin_return_address(0); }\n' > "$B/ra.c"
+if "$MOSCLANG" --target=mos -mcpu=$CPU -Os -c "$B/ra.c" -o "$B/ra.o" 2>"$B/ra.err"; then
+  echo "  SDK clang 23 __builtin_return_address(0): UNEXPECTEDLY compiled"; bad=$((bad+1))
+else
+  echo "  SDK clang 23 __builtin_return_address(0): $(grep -oE 'unable to legalize.*returnaddress' "$B/ra.err" | head -1)"
+fi
+
 echo "### parity verdict (derived from the probes above, not hardcoded) ###"
-bad=0
 for pair in "C:$B/c.o" "D:$B/d.o" "Rust:$RSO" "Zig:$B/zig.o"; do
   lang="${pair%%:*}"; o="${pair##*:}"
-  # invariant facts that MUST hold for every frontend (gated):
-  "$RE" -SW "$o" 2>/dev/null | grep -q '\.debug_info' || { echo "  FAIL $lang: no .debug_info"; bad=$((bad+1)); }
+  # invariant facts that MUST hold for every frontend (gated). NB: read the
+  # section table into a var and bash-match it -- piping readelf into `grep -q`
+  # under `set -o pipefail` is flaky (grep -q exits on first match, SIGPIPEs
+  # readelf, and pipefail then reports that as failure).
+  si="$("$RE" -SW "$o" 2>/dev/null)"
+  case "$si" in *.debug_info*) ;; *) echo "  FAIL $lang: no .debug_info"; bad=$((bad+1)) ;; esac
   [ "$(addrsz "$o")" = 4 ] || { echo "  FAIL $lang: addr_size != 4 (was '$(addrsz "$o")')"; bad=$((bad+1)); }
   [ "$(hascfi "$o")" = no ] || { echo "  FAIL $lang: unexpected CFI (.eh_frame/.debug_frame)"; bad=$((bad+1)); }
   case "$(subprog "$o")" in yes*) ;; *) echo "  FAIL $lang: no dbg_add subprogram DIE"; bad=$((bad+1));; esac
@@ -59,5 +92,5 @@ printf "  observed DWARF versions: C=%s D=%s Rust=%s Zig=%s (all addr_size=4, no
   "$(dwver "$B/c.o")" "$(dwver "$B/d.o")" "$(dwver "$RSO")" "$(dwver "$B/zig.o")"
 echo "  gaps: Zig Debug needs wrapping ops (safety panic -> returnaddress);"
 echo "        Rust dev profile needs lto+debug (non-LTO hits the G_UCMP gap)."
-echo "== $bad parity violation(s) (0 = every frontend: DWARF + addr_size=4 + no-CFI + subprogram) =="
+echo "== $bad violation(s) (0 = per-frontend DWARF+addr_size=4+no-CFI+subprogram; CFI unforceable; returnaddr gap both clusters) =="
 exit $((bad>0))
