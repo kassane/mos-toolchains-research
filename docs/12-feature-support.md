@@ -60,6 +60,11 @@ Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both rejec
   compiler_rt: **`-fno-compiler-rt` does not help**. It's fixed in LLVM 23, which
   is why Rust's (LLVM-23) bounds check works and clang's does too. `-ODebug` also
   fails (on `@llvm.returnaddress`).
+  - **It is Zig-codegen-specific, not all-LLVM-22:** LDC is *also* LLVM 22 but
+    does **not** hit it — its `-boundscheck=on` index lowers to `cmp`/`bcs`/`jsr
+    __assert` (a plain call) and builds clean at `-O0`…`-O3`/`-Oz`. Zig's
+    branch-to-inline-panic pattern is what trips `CopyTracker`. So it's a latent
+    *shared-backend* bug that only Zig's lowering triggers in practice.
 
 So **Rust has the most complete runtime memory safety on the 6502** (bounds +
 overflow); Zig gets *overflow* safety but not array-bounds (LLVM-22 backend
