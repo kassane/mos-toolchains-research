@@ -18,7 +18,9 @@ experiments that execute on `mos-sim`.
       identical `sta $fff9` for a volatile register poke (exp 20).
 - [x] Memory safety (exp 21): compile-time `@safe`/borrow rejection battery (D
       rejects 6/7, Rust all; C none) + escape analysis on MOS; runtime bounds
-      check — Rust traps (exit 77), Zig `ReleaseSafe` segfaults the compiler.
+      check — Rust traps (exit 77); Zig `ReleaseSafe` overflow traps (exit 88)
+      but its array-bounds check crashes LLVM-22 `MachineCopyPropagation`
+      (gdb-confirmed; `-fno-compiler-rt` doesn't help; fixed in LLVM 23).
 - [x] RAII / scope guards (exp 22): LIFO cleanup in all 5 (zero-cost, no unwind);
       Zig `errdefer` (error-path only); D `scope(exit)` + `~this()` +
       `extern(C++,class)` RAII + move-semantics (`@disable this(this)`/`this()`);

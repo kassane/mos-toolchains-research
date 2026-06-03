@@ -50,9 +50,17 @@ D `@safe` rejects **6/7** (gap = same-size reinterpret, Rust needs `unsafe` too)
 Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both reject
 `return &local`. **C/C++ have no compile-time memory safety.**
 
-**Runtime** safety (OOB index `a[5]` on a length-3 array, run on `mos-sim`):
-**Rust's bounds check fires** — panic → `abort` → exit 77; **C** reads OOB (UB);
-**Zig `ReleaseSafe` *segfaults the compiler*** on MOS (the safety+panic codegen
-path is broken — `-ODebug` also fails on `@llvm.returnaddress`). So **Rust is the
-only frontend with working runtime memory safety on the 6502**; for the
-compile-time half, D `@safe` ≈ Rust safe.
+**Runtime** safety (run on `mos-sim`):
+- **Rust** bounds check (`a[5]`, len 3): fires → panic → `abort` → exit 77. ✅
+- **C**: reads OOB (UB), no trap.
+- **Zig `ReleaseSafe`**: *overflow* checks **work** (`a+b` overflow → trap, exit
+  88), but the *array-bounds* check **crashes the compiler**. gdb pins it to a
+  **SIGSEGV in LLVM-22 `MachineCopyPropagation` (`CopyTracker::invalidateRegister`)**
+  while optimizing the bounds-check machine code — an LLVM-22 *backend* bug, not
+  compiler_rt: **`-fno-compiler-rt` does not help**. It's fixed in LLVM 23, which
+  is why Rust's (LLVM-23) bounds check works and clang's does too. `-ODebug` also
+  fails (on `@llvm.returnaddress`).
+
+So **Rust has the most complete runtime memory safety on the 6502** (bounds +
+overflow); Zig gets *overflow* safety but not array-bounds (LLVM-22 backend
+crash); for the compile-time half, D `@safe` ≈ Rust safe.

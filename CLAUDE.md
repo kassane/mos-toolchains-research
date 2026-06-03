@@ -74,11 +74,13 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
    agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
 8. **Debug builds & runtime safety:** Zig `-ODebug` fails on overflow-checked ops
-   (`@llvm.returnaddress` not legalizable) and `-OReleaseSafe` **segfaults the Zig
-   compiler** — so Zig's runtime safety is unavailable on MOS; use a no-safety
-   release mode. Rust's runtime bounds-check *does* work (panic=abort traps,
-   docs/12). Rust dev profile fails the G_UCMP gap — use `lto=true`+`debug=2`.
-   Inline asm works in clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10,12,15.
+   (`@llvm.returnaddress` not legalizable). `-OReleaseSafe` *overflow* checks
+   work (trap fires) but the *array-bounds* check **crashes the LLVM-22 backend**
+   — gdb: SIGSEGV in `MachineCopyPropagation`/`CopyTracker::invalidateRegister`
+   (LLVM-22 bug, fixed in LLVM 23; **`-fno-compiler-rt` does NOT help**). Rust's
+   runtime bounds-check *does* work (panic=abort traps, LLVM-23). Rust dev profile
+   fails the G_UCMP gap — use `lto=true`+`debug=2`. Inline asm works in
+   clang/Zig/LDC but **not Rust** (rust-mos#13). docs/10,12.
 9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
    `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
    and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are

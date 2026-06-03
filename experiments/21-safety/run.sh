@@ -7,7 +7,7 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../../scripts/env.sh"
-B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; P="$HERE/probes"
+B="$HERE/build"; rm -rf "$B"; mkdir -p "$B"; P="$HERE/probes"; CPU=mos6502
 bad=0
 
 dsafe(){ # label  dfile  expect(reject|accept)
@@ -62,14 +62,28 @@ fi
 # C: no bounds check -> reads OOB (UB), no trap
 "$SDKBIN/mos-sim-clang" -Os -c "$HERE/c_noidx.c" -o "$B/cn.o" 2>/dev/null
 echo "  C     a[5] (len 3): compiles, reads out of bounds at runtime (UB, no trap)"
-# Zig: runtime safety is UNAVAILABLE on MOS (informational, not gated -- it's a bug)
-printf 'export fn m(i:u8) u8 { const a=[_]u8{10,20,30}; return a[i]; }\n' > "$B/zs.zig"
-if "$ZIG" build-obj -target mos-freestanding -mcpu mos6502 -OReleaseSafe -femit-bin="$B/zs.o" "$B/zs.zig" 2>"$B/zs.err"; then
-  echo "  Zig   ReleaseSafe: compiled (bounds check present)"
-else
-  echo "  Zig   ReleaseSafe: UNBUILDABLE on MOS (safety+panic codegen path broken;"
-  echo "        Debug fails @llvm.returnaddress, ReleaseSafe crashes the compiler -- docs/12)"
+# Zig: OVERFLOW safety works (builds + traps); ARRAY-BOUNDS safety crashes LLVM-22.
+"$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -femit-bin="$B/zov.o" "$HERE/zig_ovf.zig" 2>/dev/null
+if [ -f "$B/zov.o" ]; then
+  "$SDKBIN/mos-sim-clang" -Os "$HERE/ov_main.c" "$B/zov.o" -o "$B/zov.sim" 2>/dev/null
+  set +e; "$SDKBIN/mos-sim" "$B/zov.sim"; ovc=$?; set -e
+  printf "  Zig   ReleaseSafe overflow check: exit=%s %s\n" "$ovc" "$([ "$ovc" = 88 ] && echo '-> overflow trap FIRED (works)' || echo '-> NO trap (unexpected)')"
+  [ "$ovc" = 88 ] || bad=$((bad+1))
 fi
+# array-bounds check: crashes the Zig (LLVM-22) backend. -fno-compiler-rt does NOT help.
+set +e
+"$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -fno-compiler-rt -femit-bin="$B/zbc.o" "$HERE/zig_bounds.zig" 2>"$B/zbc.err"
+bcrc=$?; set -e
+if [ "$bcrc" -ge 128 ]; then
+  echo "  Zig   ReleaseSafe bounds check: compiler CRASH (signal $((bcrc-128)); -fno-compiler-rt does NOT help)"
+  # gdb root cause (if available): SIGSEGV in LLVM MachineCopyPropagation
+  if command -v gdb >/dev/null 2>&1; then
+    frame="$(gdb -q -batch -ex 'set pagination off' -ex run -ex 'bt 3' \
+        --args "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSafe -femit-bin=/dev/null "$HERE/zig_bounds.zig" 2>/dev/null \
+        | grep -oE 'CopyTracker::invalidateRegister|MachineCopyPropagation' | head -1)"
+    echo "    gdb: SIGSEGV in LLVM-22 MachineCopyPropagation ${frame:+(}${frame}${frame:+)} (fixed in LLVM 23 -> Rust bounds-check works)"
+  fi
+elif [ -f "$B/zbc.o" ]; then echo "  Zig   ReleaseSafe bounds check: now BUILDS (LLVM-22 backend bug fixed?)"; fi
 
-echo "== $bad unexpected result(s) (0 = safety battery + Rust runtime trap as documented) =="
+echo "== $bad unexpected result(s) (0 = safety battery + Rust runtime trap + Zig overflow trap) =="
 exit $((bad>0))
