@@ -48,3 +48,24 @@ Demonstrated:
   `"hello from the 6502"` yields `HELLO FROM THE 6502`, and the program reads the
   `$FFF0` counter to report `36 chars in 1825 cycles`. Real stdin→stdout I/O plus
   cross-language FFI plus cycle measurement in one runnable 6502 image.
+
+## MMIO hardware-register parity (exp 20)
+
+Real 6502 HALs are just **volatile MMIO register access** — `mlund/mos-hardware`
+(the Rust C64/MEGA65 HAL) is `poke! = core::ptr::write_volatile`, register structs
+of `RW<u8>` at fixed addresses; `mega65-libc` is the same `POKE`/register pattern
+in C. Exp 20 ports that one primitive to all five frontends — a poke to the fixed
+MMIO register `$FFF9` (the sim console, standing in for e.g. the C64 VIC-II
+`border_color` at `$D020`):
+
+| | idiom |
+|--|--|
+| C / C++ | `*(volatile uint8_t*)0xFFF9 = c` |
+| D | `core.volatile.volatileStore(cast(ubyte*)0xFFF9, c)` — **`@system`** (raw ptr under `-preview=safer`) |
+| Zig | `@as(*volatile u8, @ptrFromInt(0xFFF9)).* = c` |
+| Rust | `core::ptr::write_volatile(0xFFF9 as *mut u8, c)` (mos-hardware's `poke!`) |
+
+All five lower to the **byte-identical** 6502 store `sta $fff9`, and linked
+together they drive the same register to print `C+RDZ`. So a portable 6502 HAL
+needs no per-language backend — the volatile-MMIO primitive is identical across
+frontends; only the surface syntax (and D's `@system` honesty) differs.

@@ -7,8 +7,15 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.87 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **17/17 experiments pass** (exit 0).
-      All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **20/20 experiments pass** (exit 0).
+      All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
+      on edition 2024.
+- [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
+      D `import()`, Zig `@embedFile`, asm `.incbin` — all identical bytes (exp 18).
+- [x] Compile-time reflection: D & Zig enumerate fields/names (`__traits`/`@typeInfo`);
+      C/C++/Rust only `sizeof` (P2996 not in clang 23; Rust = build-time macro) (exp 19).
+- [x] MMIO HAL parity (mos-hardware/mega65-libc pattern): all 5 frontends emit
+      identical `sta $fff9` for a volatile register poke (exp 20).
 - [x] Shared datalayout proven across all 4 frontends (exp 01).
 - [x] 5-language FFI binary links (0 undef) and runs on mos-sim, with D→Rust and
       Zig→C cross-calls (exp 02).

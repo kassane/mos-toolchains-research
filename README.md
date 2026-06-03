@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 17 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 20 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -83,6 +83,9 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 15 | `std-support` | Stdlib reach: C libc, C++ STL subset, Zig std (richest), Rust `alloc::Vec`, D core.stdc+ldc |
 | 16 | `mos-sim-realworld` | Interactive stdin→stdout filter (libc `getchar` + Zig FFI uppercase) + `$FFF0` cycles |
 | 17 | `zigcc-rust-linker` | `zig cc` as Rust's linker: compiles MOS objs but hits the LLVM-22/23 bitcode cluster wall |
+| 18 | `embed-file` | Compile-time file embedding 6 ways (`#embed`/`include_bytes!`/`import`/`@embedFile`/`.incbin`) → identical bytes |
+| 19 | `reflection` | Compile-time reflection: D & Zig enumerate fields/names; C/C++/Rust manage only `sizeof` |
+| 20 | `mmio-hal` | MMIO register parity (mos-hardware/mega65-libc pattern): all 5 frontends emit identical `sta $fff9` |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no
