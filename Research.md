@@ -36,7 +36,7 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
 A trivial `add(i32,i32)` compiled by each frontend produces the same
 `target datalayout`. That single fact is why FFI is even possible: identical
 pointer width, integer/aggregate alignment and endianness across clang 23,
-rustc 1.87 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 22). The MOS C
+rustc 1.98 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 22). The MOS C
 calling convention lives in the backend (zero-page "imaginary registers"
 `__rc0..31` / `__rs0..15`; args in A/X then RC2.., pointers in RS1.., aggregates
 >4 bytes by hidden pointer), so every frontend that lowers to this backend

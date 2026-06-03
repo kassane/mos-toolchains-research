@@ -25,7 +25,7 @@ commit them** (`.gitignore` guards `tools/`, `build/`, `target/`, `*.tar.xz`).
 | `$LDC` | **LDC 1.42.0** (DMD 2.112.1, LLVM **22**). D; `-betterC` only on MOS |
 | `$SDKBIN` | llvm-mos-sdk **v23.0.1** bin (clang **23**, `mos-*-clang` drivers, `ld.lld`, `mos-sim`) |
 | `$MOSCLANG`/`$MOSCXX` | raw `--target=mos` clang/clang++ (LLVM 23) |
-| `$RUSTC`/`$CARGO` | rust-mos **1.87.0-dev** (LLVM **23**), target `mos-unknown-none` |
+| `$RUSTC`/`$CARGO` | rust-mos **1.98.0-dev** (LLVM **23**), target `mos-unknown-none` |
 | `$MOS_MATTR` | `+mos6502,+mos-insns-6502,+mos-insns-6502bcd,+static-stack` — pass to LDC's `-mattr` |
 
 ## Build / run

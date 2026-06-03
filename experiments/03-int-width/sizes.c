@@ -12,7 +12,7 @@ int main(void) {
            (int)sizeof(size_t), d_sizet_bytes(), zig_usize_bytes(), rs_usize_bytes());
     printf("pointer     %d   %d   %d   %d\n",
            (int)sizeof(void*), d_ptr_bytes(), zig_usize_bytes(), rs_usize_bytes());
-    printf("c_int       %d   -   %d   %d   <- agree (all 16-bit)\n",
+    printf("c_int       %d   -   %d   %d   <- C & Rust 16-bit; Zig 32-bit (FOOTGUN)\n",
            (int)sizeof(int), zig_cint_bytes(), rs_cint_bytes());
     printf("i32 fixed   %d   %d   %d   %d   <- agree (all 32-bit)\n",
            (int)sizeof(int32_t), d_int_bytes(), zig_i32_bytes(), rs_i32_bytes());

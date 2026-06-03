@@ -34,9 +34,9 @@ evidence. Toolchain quirks worth knowing up front are in **[CLAUDE.md](CLAUDE.md
 | Lang | Toolchain | Version | LLVM | Triple / CPU |
 |------|-----------|---------|------|--------------|
 | C / C++ | LLVM-MOS SDK | clang **23.0.0git** | **23** | `--target=mos -mcpu=mos6502` |
-| Rust | Rust-MOS | rustc **1.87.0-dev** | **23** | `--target mos-unknown-none -Ctarget-cpu=mos6502` |
+| Rust | Rust-MOS | rustc **1.98.0-dev** | **23** | `--target mos-unknown-none -Ctarget-cpu=mos6502` |
 | Zig | Zig-MOS | **0.17.0-mos-dev** | **22** | `-target mos-freestanding -mcpu mos6502` |
-| D | LDC2-MOS | LDC **1.42.0-dev** (DMD 2.112.1) | **22** | `--mtriple=mos -mcpu=mos6502 -mattr=…` |
+| D | LDC2-MOS | LDC **1.42.0** (DMD 2.112.1) | **22** | `--mtriple=mos -mcpu=mos6502 -mattr=…` |
 
 All four emit the **byte-identical** LLVM data layout, which is the whole basis
 for interop:
@@ -86,7 +86,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 18 | `embed-file` | Compile-time file embedding 6 ways (`#embed`/`include_bytes!`/`import`/`@embedFile`/`.incbin`) → identical bytes |
 | 19 | `reflection` | Compile-time reflection: D & Zig enumerate fields/names; C/C++/Rust manage only `sizeof` |
 | 20 | `mmio-hal` | MMIO register parity (mos-hardware/mega65-libc pattern): all 5 frontends emit identical `sta $fff9` |
-| 21 | `safety` | `@safe`/borrow rejection battery (D & Rust) vs C (none); runtime bounds check: Rust traps, Zig unbuildable |
+| 21 | `safety` | `@safe`/borrow rejection battery (D & Rust) vs C (none); runtime bounds check: Rust traps, Zig traps w/ `mos_panic` (default handler crashes LLVM-22) |
 | 22 | `raii-scopeguard` | Scope-guard/RAII LIFO cleanup in all 5 (zero-cost); Zig `errdefer`, D move-semantics & `extern(C++,class)` |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream

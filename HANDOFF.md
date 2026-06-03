@@ -6,8 +6,8 @@ experiments that execute on `mos-sim`.
 ## Done
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
-      1.87 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **20/20 experiments pass** (exit 0).
+      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **22/22 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
@@ -53,7 +53,7 @@ experiments that execute on `mos-sim`.
 - [x] `zig cc` as Rust linker (exp 17): compiles MOS objs, links native LLVM-23
       ELF, but the SDK's LLVM-23 *bitcode* libc trips zig's LLVM-22 lld (cluster
       wall); use the SDK driver. Documented in docs/04.
-- [x] Docs `00..13`, README, Research, CLAUDE. rust-mos version noted as 1.87.
+- [x] Docs `00..14`, README, Research, CLAUDE. rust-mos version noted as 1.98.0-dev.
 
 ## Key results (the numbers a reviewer will check)
 

@@ -23,7 +23,7 @@ $MOSCLANG --target=mos -mcpu=mos6502 -Oz -S -emit-llvm file.c   # raw IR
 mos-sim-clang -Os file.c -o out.elf                              # platform build+link
 ```
 
-## Rust — rust-mos 1.87.0-dev (LLVM 23)
+## Rust — rust-mos 1.98.0-dev (LLVM 23)
 
 `rustc --print cfg --target mos-unknown-none -C target-cpu=mos6502` →
 `target_arch="mos"`, `target_pointer_width="16"`, `target_endian="little"`,
