@@ -71,39 +71,24 @@ The link mixes **LLVM-22 native ELF** (D, Zig) with **LLVM-23 LTO bitcode**
 Same algorithm, fixed-width types → flawless. Same algorithm, language keywords →
 silent corruption, because the keyword sizes diverge:
 
-| type | C | D | Zig | Rust |
-|------|---|---|-----|------|
-| `int` keyword | **2** | **4** | (i32=4) | (i32=4) |
-| `long` | 4 | **8** | — | — |
-| `c_int` | 2 | — | **4** | 2 |
-| `size_t`/`usize` | 2 | 2 | 2 | 2 |
-| pointer | 2 | 2 | 2 | 2 |
-
-C `int` is 16-bit (the LLVM-MOS C ABI); D and Rust/Zig keep `int`/`i32` at
-32-bit per their language specs. **Zig's `c_int` is 32-bit — it does *not* match
-clang's 16-bit `int`** (Zig lacks MOS C-ABI data on the `freestanding` target).
-Rust's `core::ffi::c_int` *does* match C. D's `size_t` is 2 bytes — the
-historical `i32`-size_t bug (dlang-mos-hello-world#1) is gone in LDC 1.42
-(docs/07). Compile-time `static_assert`/`comptime` checks (exp 07) make each of
-these self-verifying.
+C `int` is 16-bit (the LLVM-MOS C ABI) while D and Rust/Zig keep `int`/`i32` at
+32-bit per their specs (D's `long` is 8). The FFI trap: **Zig's `c_int` is 32-bit
+— it does *not* match clang's 16-bit `int`** (Zig lacks MOS C-ABI data on the
+`freestanding` target), whereas Rust's `core::ffi::c_int` *does*. `size_t`/`usize`
+and pointers are 2 bytes everywhere (D's old `i32`-size_t bug is gone in LDC 1.42,
+docs/07). Compile-time `static_assert`/`comptime` checks (exp 07) make each
+self-verifying. Full width table: docs/05.
 
 ## 4. Where it really breaks: struct alignment (exp 08)
 
 The datalayout says every scalar is byte-aligned (`i32:8`, `a:8`). C, clang-C++,
 Rust (`#[repr(C)]`) and D agree: `struct {u8; u32; u8}` is **6 bytes, u32 at
-offset 1**. **Zig uses natural alignment** (`@alignOf(u32)==4`), so its
+offset 1**. **Zig uses natural alignment** (`@alignOf(u32)==4`), so its plain
 `extern struct` puts the u32 at offset 4 (12 bytes) and *misreads a C-built
-struct* — round-tripping `0xDEADBEEF` returns garbage:
-
-```
-C/C++/Rust/D/Zig(align1)  size 6   0xDEADBEEF   PASS
-Zig(packed)               size 8   0xDEADBEEF   val OK, size!=6 (u48 backing rounds up)
-Zig(plain extern)         size 12  0x….22DE     DIVERGES
-```
-
-**Fix:** annotate each field `align(1)` (exact C match) — `packed struct` reads
-correctly but `@sizeOf` over-rounds. This is the same class of Zig struct-ABI
-hole seen on Xtensa, here reproduced at runtime on the 6502.
+struct* — round-tripping `0xDEADBEEF` returns garbage. **Fix:** annotate each
+field `align(1)` (exact C match, size 6) — `packed struct` reads correctly but
+`@sizeOf` over-rounds to 8. Same class of Zig struct-ABI hole seen on Xtensa,
+here reproduced at runtime on the 6502 (round-trip table in docs/05).
 
 The **zero-page address space** (datalayout `p1:8:8`) is supported both ways:
 Zig `*addrspace(.zp) u8` is 1 byte and `@addrSpaceCast` narrows a 16-bit pointer
@@ -122,16 +107,10 @@ the older IR and ELF objects link universally (docs/04).
 ## 6. Same source, different code (exp 05)
 
 A shared backend does **not** mean identical codegen — the frontend's IR shape
-and default opt pipeline dominate. One LCG loop, five languages, identical
-result `14836`, but:
-
-| | C | C++ | Rust | D | Zig |
-|--|---|-----|------|---|-----|
-| instrs | 105 | 105 | 87 | 54 | 47 |
-| cycles | 191272 | 191272 | 147225 | 119446 | 111055 |
-
-C/C++ are byte-identical (same frontend); Zig/D are leanest here. Useful as a
-caution: "same backend" guarantees *interop*, not *parity*.
+and default opt pipeline dominate. One LCG loop, five languages, identical result
+`14836`, but the code isn't: instruction counts run 105 (C/C++, byte-identical)
+down to 47 (Zig), cycles 191272 down to 111055 (Zig/D leanest; full table in
+docs/06). A caution: "same backend" guarantees *interop*, not *parity*.
 
 **Recognised kernels (exp 24)** sharpen this: the BYTE sieve, recursive fib, and
 CRC-16 in all five languages give identical canonical results, but the per-kernel

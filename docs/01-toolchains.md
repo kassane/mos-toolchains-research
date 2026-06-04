@@ -81,6 +81,7 @@ $LDC -betterC -Oz --mtriple=mos -mcpu=mos6502 -output-ll -of=out.ll -c file.d   
 
 ## The mos-sim simulator
 
-x86-64 host binary; takes a memory **image** (not ELF). MMIO: `$FFF0` 4-byte
-cycle counter, `$FFF5/6` stdin, `$FFF7` abort, `$FFF8` exit code, `$FFF9` stdout.
-Flags: `--cycles`, `--trace`, `--profile`, `--cmos` (65C02). Run: `mos-sim img`.
+x86-64 host binary; takes a memory **image** (not ELF). MMIO (canonical map):
+`$FFF0` 4-byte cycle counter, `$FFF5` stdin, `$FFF6` EOF (1 if last `$FFF5` was
+EOF), `$FFF7` abort, `$FFF8` exit code, `$FFF9` stdout. Flags: `--cycles`,
+`--trace`, `--profile`, `--cmos` (65C02). Run: `mos-sim img`.

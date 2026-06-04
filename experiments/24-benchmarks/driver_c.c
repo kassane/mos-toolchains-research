@@ -1,11 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "bench.h"
 // C-only driver, reused for the mos6502-vs-mos65c02 bonus run (same sources,
-// different -mcpu + mos-sim --cmos). Times the three C kernels via $FFF0.
-uint16_t c_sieve(uint8_t *);
-uint16_t c_fib(uint16_t);
-uint16_t c_crc16(uint8_t *, uint16_t);
-static volatile uint32_t *const CYC = (volatile uint32_t *)0xFFF0;
+// different -mcpu + mos-sim --cmos). Times the three C kernels via $FFF0 (CYC).
 static uint8_t buf[8191];
 int main(void) {
     uint32_t t0, s, f, c; uint16_t rs, rf, rc;

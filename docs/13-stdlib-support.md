@@ -56,9 +56,9 @@ eliminate, so the stdlib kernels run in their own image — but they fit and run
 
 ## Real-world mos-sim use (exp 16)
 
-`mos-sim` is a genuine I/O target, not just a return-code checker. The MMIO map:
-`$FFF5` stdin / `$FFF6` EOF / `$FFF9` stdout / `$FFF8` exit / `$FFF0` (4B) cycle
-counter (`--cycles`/`--trace`/`--cmos` flags).
+`mos-sim` is a genuine I/O target, not just a return-code checker — it exposes
+stdin / EOF / stdout / exit / abort and a 4-byte cycle counter over MMIO (the
+full `$FFFx` map is in docs/01).
 
 Demonstrated:
 - **Heap** — the SDK `malloc` succeeds (500 B at `0x1aa6`) and correctly returns

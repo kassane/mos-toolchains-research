@@ -53,13 +53,14 @@ printf "  zigstd.o footprint (code + CRC table + SHA-256 K[]): %s\n" \
 echo "### cycles: mos-sim \$FFF0 (kernel call bracketed), and result correctness ###"
 "$SDKBIN/mos-sim-clang" -mcpu=$CPU -Os -c "$HERE/driver.c" -I"$HERE" -o "$B/driver.o"
 "$SDKBIN/mos-sim-clang" -Os "$B/driver.o" "$B/c.o" "$B/cpp.o" "$B/d.o" "$B/zig.o" "$RSA" -o "$B/bench.elf"
-set +e; "$SDKBIN/mos-sim" "$B/bench.elf"; RC=$?; set -e
+# (no `set -e` in this script: mos-sim returns the *program's* exit code, captured)
+"$SDKBIN/mos-sim" "$B/bench.elf"; RC=$?
 
 # ---- stdlib dimension: Zig std on a 6502 (own binary -- heavy std closure) ----
 echo "### stdlib (Zig std.hash.crc / std.crypto / std.math) on a 6502: correctness + cycles ###"
 "$SDKBIN/mos-sim-clang" -mcpu=$CPU -Os -c "$HERE/driver_std.c" -I"$HERE" -o "$B/driver_std.o"
 "$SDKBIN/mos-sim-clang" -Os "$B/driver_std.o" "$B/zigstd.o" -o "$B/benchstd.img"
-set +e; "$SDKBIN/mos-sim" "$B/benchstd.img"; RC2=$?; set -e
+"$SDKBIN/mos-sim" "$B/benchstd.img"; RC2=$?
 echo "  (benchstd image = $(wc -c <"$B/benchstd.img") bytes: only Zig reaches CRC/crypto/sqrt from stdlib)"
 
 # ---- bonus: mos6502 vs mos65c02 on the C kernels (size + cycles; under-measured) ----
@@ -68,12 +69,12 @@ echo "### bonus: same C kernels, -mcpu=mos65c02 (run --cmos) vs mos6502 ###"
 printf "  size   6502: sieve=%s fib=%s crc16=%s    65C02: sieve=%s fib=%s crc16=%s\n" \
   "$(fnsize "$B/c.o" c_sieve)" "$(fnsize "$B/c.o" c_fib)" "$(fnsize "$B/c.o" c_crc16)" \
   "$(fnsize "$B/c65.o" c_sieve)" "$(fnsize "$B/c65.o" c_fib)" "$(fnsize "$B/c65.o" c_crc16)"
-"$SDKBIN/mos-sim-clang" -mcpu=$CPU      -Os -c "$HERE/driver_c.c" -o "$B/dc.o"
+"$SDKBIN/mos-sim-clang" -mcpu=$CPU      -Os -I"$HERE" -c "$HERE/driver_c.c" -o "$B/dc.o"
 "$SDKBIN/mos-sim-clang" -mcpu=$CPU      -Os "$B/dc.o"  "$B/c.o"  -o "$B/c6502.elf"
-"$SDKBIN/mos-sim-clang" -mcpu=mos65c02  -Os -c "$HERE/driver_c.c" -o "$B/dc65.o"
+"$SDKBIN/mos-sim-clang" -mcpu=mos65c02  -Os -I"$HERE" -c "$HERE/driver_c.c" -o "$B/dc65.o"
 "$SDKBIN/mos-sim-clang" -mcpu=mos65c02  -Os "$B/dc65.o" "$B/c65.o" -o "$B/c65c02.elf"
-printf "  cycles 6502 : "; "$SDKBIN/mos-sim"        "$B/c6502.elf"
-printf "  cycles 65C02: "; "$SDKBIN/mos-sim" --cmos "$B/c65c02.elf"
+printf "  cycles 6502 : "; "$SDKBIN/mos-sim"        "$B/c6502.elf";  RC3=$?
+printf "  cycles 65C02: "; "$SDKBIN/mos-sim" --cmos "$B/c65c02.elf"; RC4=$?
 
-echo "== cross-lang exit=$RC, Zig-stdlib exit=$RC2 (0/0 = all canonical: 1899 / 46368 / 0x7E55; CRC/SHA-256/sqrt) =="
-exit $(( RC || RC2 ))
+echo "== cross-lang=$RC, Zig-stdlib=$RC2, 6502-bonus=$RC3, 65C02-bonus=$RC4 (all 0 = canonical: 1899 / 46368 / 0x7E55; CRC/SHA-256/sqrt) =="
+exit $(( RC || RC2 || RC3 || RC4 ))

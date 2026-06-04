@@ -6,8 +6,7 @@
 // three functions themselves are ~1.7 KB), so they can't co-reside with the
 // cross-language bench's 8 KB sieve buffer in 64 KB. Standalone they fit/run.
 // Point of the experiment: on bare-metal MOS, only Zig can pull CRC / a real
-// crypto hash / sqrt straight from its stdlib (docs/13).
-static volatile uint32_t *const CYC = (volatile uint32_t *)0xFFF0;
+// crypto hash / sqrt straight from its stdlib (docs/13). CYC ($FFF0) from bench.h.
 static uint8_t buf[256];
 
 int main(void) {

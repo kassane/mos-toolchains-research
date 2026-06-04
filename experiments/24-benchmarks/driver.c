@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "bench.h"
-// Time each kernel for each frontend with the $FFF0 cycle counter, bracketing
-// ONLY the kernel call (excludes crt0/startup). Gate on the canonical result.
-static volatile uint32_t *const CYC = (volatile uint32_t *)0xFFF0;
+// Time each kernel for each frontend with the $FFF0 cycle counter (CYC, from
+// bench.h), bracketing ONLY the kernel call (excludes crt0/startup). Gate on the
+// canonical result.
 static uint8_t buf[8191];
 static int bad = 0;
 

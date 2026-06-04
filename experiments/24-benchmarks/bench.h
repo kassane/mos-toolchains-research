@@ -1,6 +1,9 @@
 #ifndef BENCH_H
 #define BENCH_H
 #include <stdint.h>
+/* Shared mos-sim cycle counter (4-byte MMIO at $FFF0); the drivers bracket each
+ * kernel call with it. Single definition so the address lives in one place. */
+#define CYC ((volatile uint32_t *)0xFFF0)
 #ifdef __cplusplus
 extern "C" {
 #endif
