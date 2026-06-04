@@ -38,7 +38,8 @@ experiments/02-ffi-matrix/run.sh   # one experiment (builds, links, runs on mos-
 
 `mos-sim` takes a memory **image** (not ELF — `file` reports "data"). MMIO:
 `$FFF8`=exit code, `$FFF9`=stdout char, `$FFF0`(4B)=cycle counter; flags
-`--cycles`, `--trace`, `--cmos`. No `--help` (it treats args as the image path).
+`--cycles`, `--trace`, `--profile`, `--cmos`. No `--help` *flag* (args are the
+image path); a bare `mos-sim` prints a usage banner with the MMIO map.
 Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 **not** `llvm-link`/`opt`/`llc` — the linker's LTO is the only IR-merge engine).
 

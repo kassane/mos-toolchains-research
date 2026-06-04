@@ -26,7 +26,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | Compile-time memory safety | ❌ | ✅ | ✅ `@safe` | ⚠️ runtime model | C/C++ none; exp 21 |
 | Runtime memory safety | ❌ | ✅ bounds+overflow→trap | ❌ betterC | ✅ w/ `mos_panic` | Zig needs zig-mos-examples' panic handler (default crashes LLVM‑22); exp 21 |
 | RAII / scope-guard cleanup | ✅ | ✅ `Drop` | ✅ `scope(exit)` | ✅ `defer` | zero-cost, LIFO; exp 22 |
-| DWARF debug info | ✅ v5 | ✅ v4 | ✅ v4 | ✅ v4 | no CFI; exp 11 |
+| DWARF debug info | ✅ v5 | ✅ v4 | ✅ v4 | ✅ v4 | usable (PC→src); no CFI; exp 11/23 |
 
 **Co-ABI group:** C, C++, Rust, D, and Zig (with `align(1)` structs) are mutually
 FFI-safe for scalars, pointers, callbacks and byte-packed structs. The only

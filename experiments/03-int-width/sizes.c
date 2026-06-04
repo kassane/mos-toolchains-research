@@ -8,7 +8,7 @@ int main(void) {
            (int)sizeof(int), d_int_bytes());
     printf("long        %d   %d   -   -   <- C 'long' vs D 'long' DIFFER\n",
            (int)sizeof(long), d_long_bytes());
-    printf("size_t      %d   %d   %d   %d   <- D size_t WIDER than pointer (ldc#1)\n",
+    printf("size_t      %d   %d   %d   %d   <- all 2 = pointer width (D ldc#1 bug fixed)\n",
            (int)sizeof(size_t), d_sizet_bytes(), zig_usize_bytes(), rs_usize_bytes());
     printf("pointer     %d   %d   %d   %d\n",
            (int)sizeof(void*), d_ptr_bytes(), zig_usize_bytes(), rs_usize_bytes());

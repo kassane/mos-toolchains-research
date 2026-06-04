@@ -66,8 +66,9 @@ it corrupts (docs/05, exp 08).
 
 - **Floating point** — soft-float, rough (llvm-mos#10); avoid across FFI.
 - **PIC** — limited (llvm-mos#222), though the rust target reports `pic`.
-- **No DWARF CFI / stack unwinding** on MOS *today* — no backtraces. But this is
-  in progress, not infeasible: there's a designed dual-stack CFA and a closed-only-
-  to-be-split PR ([llvm-mos#519](https://github.com/llvm-mos/llvm-mos/pull/519)).
-  Verified still absent on the pinned SDK (and unforceable); details in docs/10.
+- **No DWARF CFI / stack unwinding** on MOS *today* — no backtraces. There's a
+  designed dual-stack CFA and an implementation ([llvm-mos#519](https://github.com/llvm-mos/llvm-mos/pull/519)),
+  but it was closed to be split into smaller PRs and that split **stalled after
+  Jan 2026 with the CFI core unmerged** — a *not-yet*, not imminent. Verified still
+  absent on the pinned SDK (and unforceable); details in docs/10.
 - **No published ABI-stability guarantee** — pin one toolchain set.
