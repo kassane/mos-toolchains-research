@@ -81,6 +81,11 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - zig-mos: https://github.com/kassane/zig-mos-bootstrap ·
   https://github.com/kassane/zig-mos-examples ·
   https://kassane.github.io/blog/zig_mos_6502/
-- Toolchain tarballs used here are pinned in `scripts/setup.sh`.
+- Toolchain tarballs are pinned in `scripts/setup.sh`. **Rust + LDC track the
+  stable `0.1.0` tag** — a redownload is byte-identical (re-verified mid-2026: rustc
+  unchanged, all rust-mos references above still hold — c_int=16, asm! unsupported,
+  G_UCMP needs `lto`). **Zig tracks the rolling `0.17.0-dev` tag**, whose builds
+  *drift* (the June-2026 build fixed Zig `c_int`→16-bit and reshaped `@typeInfo`).
+  Pin a build for reproducibility.
 - Methodology mirrors https://github.com/kassane/espressif-toolchains-research
   (the Xtensa/RISC-V sibling of this study).
