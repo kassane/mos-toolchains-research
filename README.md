@@ -20,12 +20,11 @@ experiment that executes on the `mos-sim` 6502 simulator):
 > (1) *types* — the keyword `int` is 16-bit in C but 32-bit in D/Rust/Zig (Zig's
 > `c_int` used to be 32-bit too, now fixed to 16-bit = C's); (2) *struct layout* — Zig's
 > `extern struct` over-aligns (`u32`→4-byte) so structs corrupt unless fields are
-> `align(1)`; (3) *one call-ABI corner* — **by-value structs ≤4 bytes split into
-> two camps**: C/C++/Zig **and now Rust** decompose them into registers (the MOS C
-> ABI) while **D still passes them indirectly**, so a by-value small struct corrupts
-> across a D↔other boundary (`experiments/12`; Rust's side was fixed by a 2026-06-04
-> rust-mos callconv rebuild). **Fix: cross the boundary with fixed-width
-> scalars, and pass aggregates by pointer (or keep them >4 bytes).**
+> `align(1)`; (3) *one call-ABI corner, now closed* — **by-value structs ≤4 bytes**
+> are decomposed into registers (the MOS C ABI) by **all five** frontends; D and Rust
+> were the indirect holdouts and **both were fixed in their callconv rebuilds**
+> (`experiments/12`). **Fix: cross the boundary with fixed-width scalars; passing
+> aggregates by pointer stays the version-proof choice (no ABI-stability promise).**
 
 See **[Research.md](Research.md)** for the write-up and **[docs/](docs/)** for the
 evidence. Toolchain quirks worth knowing up front are in **[CLAUDE.md](CLAUDE.md)**.
@@ -78,7 +77,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 09 | `zero-cost` | Monomorphized generic + higher-order callable: C++ ties C exactly, lambdas inline away |
 | 10 | `tmp-parity` | factorial(10) via constexpr/consteval/CTFE/const-fn folds at `-O0` (lang guarantee); C doesn't |
 | 11 | `dwarf-parity` | Debug info: clang=DWARF5/others=DWARF4, addr_size=4 (deliberate), no CFI (unforceable; designed upstream); `returnaddress` gap both clusters; Rust-dev G_UCMP |
-| 12 | `byval-struct` | By-value struct ABI: C/C++/Zig/Rust decompose ≤4B; **D** still passes indirect → garbage (Rust fixed 2026-06) |
+| 12 | `byval-struct` | By-value struct ABI: **all five** decompose ≤4B into registers — D & Rust were the indirect holdouts, both fixed in their callconv rebuilds |
 | 13 | `scalar-callback-abi` | i64 round-trip, signed negate, function-pointer callbacks: shared across all 5 |
 | 14 | `feature-probe` | Capability matrix: inline-asm (all 4 — rust via `asm_experimental_arch`), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
 | 15 | `std-support` | Stdlib reach: C libc, C++ STL subset, Zig std (richest), Rust `alloc::Vec`, D core.stdc+ldc |

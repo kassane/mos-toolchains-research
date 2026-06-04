@@ -48,6 +48,15 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - `#2520` 16-bit bounds-check `ICmp` type-mismatch (MSP430) — same 16-bit-target
   family. `#2194` (merged) original MSP430 / 16-bit support that 8/16-bit targets
   build on.
+- **By-value-struct callconv FIXED in the rebuilt LDC** (`40c2f8c8…`): ≤4-byte
+  aggregates now lower as a first-class aggregate (`@d_small(%Small)`, **no `byval`**)
+  and the backend decomposes them to registers — matching the MOS C ABI. This closes
+  the last FFI call-ABI hole (D was the final indirect holdout after Rust; exp 12,
+  docs/11). Re-verified gaps that **persist** on this build: empty `-mcpu` feature
+  string (#4919 class), `core.stdc.stdio`/`stdlib` unported (`"unsupported system"`),
+  `import std.math` (`undefined c_long`), `scope(failure)` rejected under `-betterC`,
+  DMD-style `asm{}` needs `@trusted` under `-preview=safer`, and `--edition=2026` is
+  rejected. `size_t` stays 2 bytes (#4466).
 - D on MOS is **`-betterC` only**; no druntime/Phobos.
 
 ## kassane/dlang-mos-hello-world

@@ -51,9 +51,10 @@ experiments that execute on `mos-sim`.
       lowering in **either** cluster; Zig-Debug & Rust-dev G_UCMP gaps (exp 11).
 - [x] Dynamic debug (exp 23): DWARF line tables are *usable* — `mos-sim --profile`/
       `--trace` runtime PCs symbolize back to source via `llvm-symbolizer`/`addr2line`.
-- [x] By-value struct ABI found by IR reverse-engineering: C/C++/Zig **and now Rust**
-      decompose ≤4B structs to registers; **D** still passes indirect → garbage. Rust
-      was fixed by the 2026-06-04 rust-mos callconv rebuild (exp 12).
+- [x] By-value struct ABI found by IR reverse-engineering: **all five** decompose ≤4B
+      structs to registers. D & Rust were the indirect holdouts — both fixed in their
+      callconv rebuilds (Rust first, then D/LDC); the last FFI call-ABI hole is now
+      closed (exp 12).
 - [x] Extended scalar/callback ABI (i64, signed, fn-pointer) shared by all 5 (exp 13).
 - [x] Feature/capability probe: inline-asm (all 4 — rust via `asm_experimental_arch`), interrupts, atomics(8-bit),
       multi-CPU 65c02/w65816, SIMD ✗ (exp 14).
@@ -75,7 +76,7 @@ experiments that execute on `mos-sim`.
 | FFI matrix | mos-sim exit 0, 0 undefined symbols, ELF e_machine `0x1966` |
 | `int` width | C 2 / D 4 / Rust i32 4 / Zig i32 4; Zig `c_int` 4 (≠ C 2); Rust `c_int` 2 |
 | struct `{u8,u32,u8}` | C/C++/Rust/D/Zig-align1 = 6 B ok; Zig plain = 12 B garbage |
-| by-value small struct | C/C++/Zig/Rust decompose→registers; D indirect→garbage (Rust fixed 2026-06; exp 12) |
+| by-value small struct | all five decompose→registers (D & Rust were indirect→garbage, both fixed in callconv rebuilds; exp 12) |
 | i64/signed/callback | shared across all 5 (exp 13) |
 | DWARF | clang v5, LDC/Rust/Zig v4, addr_size=4, no CFI (exp 11) |
 | same loop | identical result 14836; cycles C 191272 … Zig 111055 |

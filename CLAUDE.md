@@ -70,13 +70,15 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    exceptions, TypeInfo, dynamic/associative arrays. `extern(C)` for FFI; LDC
    predefines `version(MOS6502)`. D `size_t` is fixed to 2 bytes in LDC 1.42
    (the old dlang-mos-hello-world#1 `i32` bug is gone, docs/07).
-7. **By-value structs ≤4 bytes: only D is now the FFI hazard.** clang/Zig/**Rust**
-   decompose them into registers (the MOS C ABI); **D (LDC)** still passes them
-   indirectly (`byval`/`ptr`), so a small struct by value corrupts across a D↔other
-   boundary. (Rust used to be indirect too — the rebuilt toolchain's callconv fix,
-   2026-06-04, moved it into the decompose camp; exp 12 prints `Rust now-matches(!)`,
-   `D DIVERGES`.) Pass aggregates **by pointer** to be safe (all agree; >4-byte sret
-   also agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
+7. **By-value structs ≤4 bytes: the hole is now CLOSED — all five decompose.**
+   clang/Zig/**Rust**/**D** all decompose ≤4-byte aggregates into registers (the MOS
+   C ABI); exp 12 prints `now-matches(!)` for both Rust and D. This was the last FFI
+   call-ABI disagreement and it took two rebuilds to close: **Rust**'s callconv fix
+   first, then **D (LDC)** in the updated toolchain (drops `byval`/`ptr`, now passes a
+   first-class aggregate — verified: no `byval` in the IR). Small by-value structs now
+   round-trip across all five. Still, there's **no ABI-stability promise** (llvm-mos#229)
+   and this was broken until recently, so passing aggregates **by pointer** stays the
+   version-proof choice (>4-byte sret always agreed). docs/11, exp 12.
 8. **Debug builds & runtime safety:** Zig `-ODebug` fails (`@llvm.returnaddress`;
    plus an SSP stack-protector lowering failure — use a release mode). That
    returnaddress legalize gap is **both clusters**: SDK clang 23 also can't lower

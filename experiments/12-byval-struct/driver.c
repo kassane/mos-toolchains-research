@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include "bv.h"
-/* By-value struct ABI on MOS for aggregates <=4 bytes:
- *   {C, C++, Zig, Rust}  decompose into scalar registers  (the official MOS C ABI)
- *   {LDC/D}              still passes indirectly by hidden pointer (non-conformant)
- * so a C caller (which decomposes) feeds D garbage. Rust USED to be in the indirect
- * camp too; the rebuilt rust-mos toolchain's callconv fix (2026-06-04) moved it to
- * decompose -> this prints "Rust now-matches(!)". The >4-byte path (Big via sret
- * pointer) is agreed by everyone. Portable fix: pass by pointer or keep aggregates
- * >4 bytes. */
+/* By-value struct ABI on MOS for aggregates <=4 bytes: the MOS C ABI decomposes them
+ * into scalar registers (>4 bytes go via an sret pointer). All five frontends now
+ * AGREE -> every row prints "now-matches(!)"/"decompose OK". D and Rust were the
+ * holdouts (both passed indirectly by hidden pointer, feeding a C caller garbage);
+ * each was fixed in its callconv rebuild -- Rust first, then D (LDC, now a first-class
+ * aggregate, no `byval`). A small-struct divergence here would now be a REGRESSION.
+ * Conservative/version-proof fix: pass aggregates by pointer or keep them >4 bytes
+ * (no ABI-stability promise). */
 int main(void){
     struct Small s = { 40, 2 };  /* sum 42 */
     printf("by-value struct ABI (small<=4B register-decomposed; big>4B sret)\n");
@@ -24,7 +24,7 @@ int main(void){
         printf("%-5s %4u   %5u    %s\n", dec[i].n, sm, bs, ok?"decompose OK":"BROKEN");
         if(!ok) bad++;
     }
-    /* camp expected to diverge on SMALL (indirect), but agree on BIG (sret) */
+    /* the two formerly-indirect holdouts (Rust, then D) — both fixed; must now match */
     struct { const char *n; uint16_t(*sm)(struct Small); struct Big(*mk)(uint16_t); } ind[] = {
         {"Rust",rs_small,rs_mkbig},{"D",d_small,d_mkbig},
     };
@@ -33,9 +33,9 @@ int main(void){
         uint16_t bs=(uint16_t)(b.a+b.b+b.c+b.d);
         int small_div=(sm!=42), big_ok=(bs==46);
         printf("%-5s %4u   %5u    %s\n", ind[i].n, sm, bs,
-               small_div ? "DIVERGES (indirect, documented)" : "now-matches(!)");
-        if(!big_ok) bad++;            /* big (sret) must still agree everywhere */
+               small_div ? "DIVERGES (REGRESSION!)" : "now-matches(!)");
+        if(!big_ok || small_div) bad++;  /* hole closed: small AND big must now agree */
     }
-    printf("== %d unexpected failure(s) (0 = decompose camp + all big agree) ==\n", bad);
+    printf("== %d unexpected failure(s) (0 = all five decompose + all big agree) ==\n", bad);
     return bad;
 }

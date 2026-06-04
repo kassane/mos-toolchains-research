@@ -1,22 +1,25 @@
 # 11 — By-value struct & extended scalar ABI (exp 12, 13)
 
 docs/03 showed scalars/pointers/callbacks share the ABI. Here we stress the
-*aggregate* and *wide-scalar* corners that the FFI matrix didn't, and find the
-one genuine call-ABI hole.
+*aggregate* and *wide-scalar* corners that the FFI matrix didn't — the place that
+used to be the one genuine call-ABI hole, **now closed**.
 
-## By-value structs split into two camps (exp 12)
+## By-value structs ≤4 bytes: all five now agree (exp 12)
 
 Passing a struct **by value** (not by pointer). The MOS C ABI says aggregates
 ≤4 bytes are **decomposed into scalar registers**; >4 bytes go via a hidden
-pointer (sret). The frontends do **not** agree on the ≤4-byte rule:
+pointer (sret). This used to be the FFI matrix's one disagreement — and it took
+*two separate toolchain rebuilds* to close it. As of the current builds **all five
+decompose identically** (C driver calls each language's `small`, verified on
+`mos-sim`):
 
 ```
 small(40,2)->42   big sum->46         small-struct ABI
 C    42   46   decompose OK
 C++  42   46   decompose OK
 Zig  42   46   decompose OK
-Rust 42   46   now-matches(!)          <- callconv fix (was 66, indirect)
-D   215   46   DIVERGES (indirect)     <- reads garbage (LDC still indirect)
+Rust 42   46   now-matches(!)          <- callconv fix (rust-mos rebuild; was 66, indirect)
+D    42   46   now-matches(!)          <- callconv fix (LDC rebuild; was 215, indirect)
 ```
 
 The IR shows exactly why — same 2-byte `struct Small{u8,u8}`:
@@ -25,19 +28,22 @@ The IR shows exactly why — same 2-byte `struct Small{u8,u8}`:
 |--|--|--|
 | clang | `@c_small(i8, i8)` | decomposed → A,X (official MOS C ABI) |
 | Zig | `@zig_small(%Small)` | first-class aggregate → backend decomposes → A,X |
-| LDC | `@d_small(ptr byval(%Small))` | **indirect** — expects a pointer |
-| Rust | now **decomposed → A,X** (callconv fix 2026-06; was `ptr` indirect) | matches the MOS C ABI |
+| Rust | decomposed → A,X (callconv fix; was `ptr` indirect) | matches the MOS C ABI |
+| LDC | `@d_small(%small.Small %s_arg)` (was `ptr byval(%Small)`) | now first-class aggregate → backend decomposes → A,X |
 
-A C caller decomposes into registers; **D (LDC)** still reads those register bytes as
-a *pointer* and dereferences garbage (Rust used to as well — its callconv was fixed
-in the 2026-06-04 rust-mos rebuild). So **by-value structs ≤4 bytes are not FFI-safe
-between {C,C++,Zig,Rust} and {D}** on MOS. The **>4-byte path agrees** (everyone
-uses an sret/byref pointer — `define void @c_mkbig(ptr ... sret(...))`), which is
-why `Big` round-trips for all five.
+Both holdouts have been fixed in their rebuilds: **Rust**'s callconv first, then
+**D (LDC)** — the updated LDC drops the `byval` indirection and passes `Small` as a
+first-class aggregate (no `byval` anywhere in the IR), so the backend decomposes it
+to A,X exactly like clang. A C caller and a D callee now agree; the historical
+"D reads the register bytes as a pointer and dereferences garbage" (→ `215`) is gone.
+The **>4-byte path always agreed** (everyone uses an sret/byref pointer —
+`define void @c_mkbig(ptr ... sret(...))`), which is why `Big` round-tripped for all
+five all along.
 
-**Fix:** never pass small structs by value across the boundary — pass by pointer
-(every frontend agrees; exp 02/08) or keep aggregates >4 bytes. This is the MOS
-instance of the classic "by-value struct argument" FFI hole.
+**Caveat:** small by-value structs now round-trip across all five, but this corner
+was broken until very recently and there is **no ABI-stability promise** (docs/07,
+llvm-mos#229) — so passing aggregates **by pointer** remains the version-independent
+conservative choice (every frontend has always agreed on that; exp 02/08).
 
 ## Wide scalars & callbacks are fully shared (exp 13)
 
@@ -58,8 +64,9 @@ C/C++/Rust/D/Zig   ok       1234       31      PASS
 
 ## Net
 
-The shared C ABI covers scalars of every width, pointers, and callbacks. The
-**only** call-level hole is **by-value structs ≤4 bytes** (a frontend lowering
-disagreement, not a backend issue). Combined with the *type-width* footguns
-(docs/05), the FFI rulebook is: fixed-width scalars, and aggregates only by
-pointer.
+The shared C ABI covers scalars of every width, pointers, and callbacks — and now
+**by-value structs ≤4 bytes too** (the last call-level disagreement, closed by the
+Rust and LDC callconv rebuilds; it was always a frontend lowering issue, not a
+backend one). What remains are the *type-width* footguns (docs/05). So the FFI
+rulebook is now just: fixed-width scalars — and, conservatively, aggregates by
+pointer (no longer a correctness requirement on current builds, but version-proof).
