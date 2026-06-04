@@ -49,7 +49,10 @@ Rust     -       7        -     size_of only (reflection = build-time proc-macro
 ```
 
 (`namesum` = `'a'+'b'+'c' = 294`, proving D/Zig read field names; `sizesum` =
-1+4+2 = 7 = whole `sizeof` here because MOS is byte-packed, docs/05.)
+1+4+2 = 7 = whole `sizeof` here because MOS is byte-packed, docs/05.) NB: zig-mos's
+`@typeInfo` Struct API changed in the 0.17-dev line — fields are now parallel
+`field_names`/`field_types` arrays (and `Type` moved to `std.lang`), not the older
+`.fields` list; exp 19's Zig source tracks the current shape.
 
 | capability | C | C++ (clang 23) | **D** (-betterC) | Rust (no_std) | **Zig** |
 |---|:--:|:--:|:--:|:--:|:--:|

@@ -58,8 +58,9 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    *benign* for base mos6502 — the backend derives features from the CPU anyway
    (docs/06, byte-identical asm). Still pass `-mattr=$MOS_MATTR` for parity.
 4. **`int` is not portable across languages on MOS.** C `int` = 16-bit; D/Rust/Zig
-   `int`/`i32` = 32-bit; Zig `c_int` = 32-bit (≠ C). Cross FFI with `uint16_t`/`u16`
-   /`ushort` etc. (docs/05). Rust's `core::ffi::c_int` *does* match C (16-bit).
+   `int`/`i32` = 32-bit. Cross FFI with `uint16_t`/`u16`/`ushort` etc. (docs/05).
+   `c_int` matches C (16-bit) in Rust and — now fixed — in Zig too (Zig `c_int` was
+   32-bit on older 0.17-dev builds; the current build is 16-bit).
 5. **Zig over-aligns structs.** `@alignOf(u32)` is 4 in Zig but 1 in the MOS
    datalayout, so a Zig `extern struct {u8,u32,…}` puts the u32 at offset 4
    (sizeof 12) while C/D/Rust use offset 1 (sizeof 6). Reading a C struct through

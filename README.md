@@ -17,8 +17,8 @@ experiment that executes on the `mos-sim` 6502 simulator):
 > **Yes for scalars (every width), pointers and callbacks — five co-linkable
 > language objects (C, C++, Rust, D, Zig) share one C ABI and run correctly in a
 > single 6502 binary (`experiments/02, 13`).** The holes are narrow and specific:
-> (1) *types* — the keyword `int` is 16-bit in C but 32-bit in D/Rust/Zig, and
-> Zig's `c_int` is 32-bit (≠ C's 16-bit); (2) *struct layout* — Zig's
+> (1) *types* — the keyword `int` is 16-bit in C but 32-bit in D/Rust/Zig (Zig's
+> `c_int` used to be 32-bit too, now fixed to 16-bit = C's); (2) *struct layout* — Zig's
 > `extern struct` over-aligns (`u32`→4-byte) so structs corrupt unless fields are
 > `align(1)`; (3) *one call-ABI corner* — **by-value structs ≤4 bytes split into
 > two camps**: C/C++/Zig decompose them into registers (the MOS C ABI) while

@@ -12,7 +12,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | Links into shared FFI binary | ✅ | ✅ | ✅ | ✅ | 0 undef (exp 02) |
 | Calls / called-by other langs | ✅ | ✅ | ✅ | ✅ | D→Rust, Zig→C tested |
 | `int` keyword = C's 16-bit | ✅ | ❌ (32) | ❌ (32) | ❌ (32) | use fixed width (exp 03) |
-| `c_int` matches C | — | ✅ (16) | — | ❌ (32) | Zig footgun (exp 03/07) |
+| `c_int` matches C | — | ✅ (16) | — | ✅ (16) | Zig fixed — was 32 on older builds (exp 03/07) |
 | C-compatible struct layout | ✅ | ✅ `#[repr(C)]` | ✅ | ⚠️ `align(1)` | Zig over-aligns (exp 08) |
 | Zero-page address space | ✅ AS(1) | ❌ (not exposed) | ❌ | ✅ `.zp` | exp 08 |
 | Standard library on MOS | ⚠️ freestanding libc | ⚠️ `core`/`alloc` | ❌ `-betterC` only | ⚠️ `std` partial | docs/01 |

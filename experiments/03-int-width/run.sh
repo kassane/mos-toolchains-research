@@ -11,3 +11,4 @@ cp "$(find "$HERE/rust/target" -name 'libsizes_rs.a' | head -1)" "$B/libsizes_rs
 "$SDKBIN/mos-sim-clang" -Os "$B/sizes.o" "$B/sizes_d.o" "$B/sizes_zig.o" "$B/libsizes_rs.a" -o "$B/sizes.elf"
 set +e; "$SDKBIN/mos-sim" "$B/sizes.elf"; RC=$?; set -e
 echo "(exit $RC)"
+exit $RC

@@ -1,6 +1,6 @@
 const std = @import("std");
 comptime {
-    std.debug.assert(@sizeOf(c_int) == 4); // Zig c_int=32-bit FOOTGUN (C int=2)
+    std.debug.assert(@sizeOf(c_int) == 2); // Zig c_int=16-bit now, matches C (was 32-bit on older builds)
     std.debug.assert(@sizeOf(usize) == 2); // usize matches 16-bit pointer
     std.debug.assert(@sizeOf(i32) == 4);
     std.debug.assert(@sizeOf(*u8) == 2); // normal pointer 16-bit

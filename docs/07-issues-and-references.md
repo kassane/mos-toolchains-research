@@ -54,6 +54,23 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
   build pattern we mirror: `-betterC`, `-mtriple=mos`, link via `-gcc=mos-*-clang
   -linker=lld`, FFI through ImportC.
 
+## zig-mos (kassane/zig-mos-bootstrap)
+
+- **`c_int` width drifts across dev builds:** older `0.17.0-dev` builds gave a
+  **32-bit** `c_int` (the `mos-freestanding` target lacked MOS C-ABI data — the
+  Zig↔C footgun exp 03/07 measured); the **current build fixed it to 16-bit** (= C).
+  A live reminder that a rolling dev tag's ABI can move — pin a build.
+- **`@typeInfo` Struct API drift:** the comptime field list is now parallel
+  `field_names`/`field_types` arrays (`Type` moved to `std.lang`), not the older
+  `.fields` list (exp 19).
+- **`@llvm.returnaddress` is unlowerable** → Zig `-ODebug` fails on safety-checked
+  ops (use wrapping ops / a release mode; exp 11, docs/10). **ReleaseSafe's default
+  panic handler crashes** the LLVM-22 backend's `MachineCopyPropagation` (upstream
+  llvm#167336) → use the `mos_panic` handler (exp 21, docs/12). Both **persist** on
+  the current build (LLVM 22).
+- **`extern struct` over-aligns** (`@alignOf(u32)`=4 ≠ the MOS datalayout's 1) so a
+  Zig struct misreads a C struct unless fields are `align(1)` (exp 08, docs/05).
+
 ## References
 
 - llvm-mos backend & SDK: https://github.com/llvm-mos/llvm-mos ·

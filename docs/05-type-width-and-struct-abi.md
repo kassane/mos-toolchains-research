@@ -18,9 +18,10 @@ i32 fixed   4   4   4   4     <- agree
 - **C `int` is 16-bit** (the LLVM-MOS C ABI, `c_int_width=16`). D mandates
   `int`=32 / `long`=64; Rust/Zig `i32`=32. So the **keyword `int` is not
   ABI-compatible** between C and the others.
-- **Zig `c_int` is 32-bit** on `mos-freestanding` — it does *not* track clang's
-  16-bit `int`. Passing `c_int` between Zig and C is wrong. (Rust's
-  `core::ffi::c_int` correctly is 16-bit.)
+- **Zig `c_int` is 16-bit** on the current `mos-freestanding` build — it now
+  tracks clang's 16-bit `int`, so Zig↔C `c_int` is safe. It was **32-bit on older
+  0.17-dev builds** (the target lacked MOS C-ABI data); dev-build ABI can drift, so
+  pin a build. (Rust's `core::ffi::c_int` is 16-bit too.)
 - **D `size_t` is 2 bytes** (= pointer). The historical `i32`-wide `size_t`
   (dlang-mos-hello-world#1, ldc#4466) is **fixed in LDC 1.42**.
 

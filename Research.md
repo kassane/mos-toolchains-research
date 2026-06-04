@@ -16,9 +16,10 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
   single 6502 binary with **0 undefined symbols** and run correctly on the sim,
   including transitive cross-calls D→Rust and Zig→C (exp 02).
 - **The holes are at the type level, not the call level.** The keyword `int` is
-  16-bit in C but 32-bit in D/Rust/Zig; Zig's `c_int` is 32-bit (≠ C); Zig
-  over-aligns struct fields so `extern struct` corrupts by-pointer structs
-  (exp 03, 05, 07, 08). Pass fixed-width scalars or byte-aligned structs.
+  16-bit in C but 32-bit in D/Rust/Zig (Zig's `c_int` is 16-bit again — it was
+  32-bit on older builds); Zig over-aligns struct fields so `extern struct`
+  corrupts by-pointer structs (exp 03, 05, 07, 08). Pass fixed-width scalars or
+  byte-aligned structs.
 - **IRs mix across LLVM versions.** The LLVM-23 toolchain (SDK, Rust) consumes
   LLVM-22 textual IR from D and Zig and links/LTOs it into a running binary
   (exp 04). Two version clusters, one for bitcode, but ELF is universal —
@@ -72,9 +73,9 @@ Same algorithm, fixed-width types → flawless. Same algorithm, language keyword
 silent corruption, because the keyword sizes diverge:
 
 C `int` is 16-bit (the LLVM-MOS C ABI) while D and Rust/Zig keep `int`/`i32` at
-32-bit per their specs (D's `long` is 8). The FFI trap: **Zig's `c_int` is 32-bit
-— it does *not* match clang's 16-bit `int`** (Zig lacks MOS C-ABI data on the
-`freestanding` target), whereas Rust's `core::ffi::c_int` *does*. `size_t`/`usize`
+32-bit per their specs (D's `long` is 8). `c_int` matches C's 16-bit in Rust, and
+— now fixed — in Zig too: the current 0.17-dev build gives Zig `c_int` = 16-bit
+(older builds had 32-bit, lacking MOS C-ABI data on `freestanding`). `size_t`/`usize`
 and pointers are 2 bytes everywhere (D's old `i32`-size_t bug is gone in LDC 1.42,
 docs/07). Compile-time `static_assert`/`comptime` checks (exp 07) make each
 self-verifying. Full width table: docs/05.
