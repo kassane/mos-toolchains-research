@@ -38,7 +38,10 @@ lda #$0 ; ldx #$5f ; ldy #$37 ; …    ; 0x00375F00 little-endian, then rts
 
 `consteval` is the strict analogue of Zig's `comptime`: it *cannot* be evaluated
 at runtime. `constexpr`/D-CTFE/`const fn` *may* run at runtime in a non-const
-context but are forced compile-time in a const context.
+context but are forced compile-time in a const context. (C++20 `constinit` is
+related but distinct — it *guarantees constant-initialization* of a static/global
+rather than computing a value; it too compiles for MOS — `__cpp_consteval` and
+`__cpp_constinit` are both defined under the SDK clang, `-std=c++20`/`c++2c`.)
 
 ## Feature-surface parity (where they diverge)
 

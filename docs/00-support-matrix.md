@@ -20,7 +20,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | LTO required | optional | ✅ required | optional | optional | rust target sets it |
 | Float across FFI | ❌ avoid | ❌ avoid | ❌ avoid | ❌ avoid | soft-float rough (llvm-mos#10) |
 | Float math (`sqrt`) on MOS | ❌ no `<math.h>` | ❌ std-only | ✅ `core.math` | ✅ `std.math` | soft-float; *compiles* (exp 24 runs integer `isqrt`) |
-| Compile-time eval (CTFE) | ⚠️ C++ `constexpr` only | ✅ `const fn` | ✅ CTFE | ✅ `comptime` | C has none; exp 10 |
+| Compile-time eval (CTFE) | ⚠️ C++ `constexpr`/`consteval` (C: none) | ✅ `const fn` | ✅ CTFE | ✅ `comptime` | C has none; exp 10 |
 | Compile-time reflection | ❌ | ❌ | ✅ `__traits` | ✅ `@typeInfo` | C++ P2996 = C++26; exp 19 |
 | File embedding | ✅ `#embed` | ✅ `include_bytes!` | ✅ `import()` | ✅ `@embedFile` | also `.incbin`; exp 18 |
 | Compile-time memory safety | ❌ | ✅ | ✅ `@safe` | ⚠️ runtime model | C/C++ none; exp 21 |
@@ -33,7 +33,7 @@ FFI-safe for scalars, pointers, callbacks and byte-packed structs. The only
 hard outlier is Zig's default struct alignment.
 
 **Compile-time leaders:** D and Zig (CTFE/reflection/embedding); C++ has
-`constexpr`/`consteval` but no reflection (P2996 is C++26); C has neither.
+`constexpr`/`consteval`/`constinit` but no reflection (P2996 is C++26); C has neither.
 **Safety leader:** Rust (compile-time *and* working runtime checks on MOS); D
 matches the compile-time half via `@safe`.
 
