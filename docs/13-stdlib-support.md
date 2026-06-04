@@ -50,7 +50,7 @@ with zero porting. **Only Zig** can do this on bare-metal MOS: C/C++ (STL subset
 Rust (`core`), and D (`-betterC`, no Phobos `std.digest`) have no hashing/crypto
 in their reachable stdlib — every other language in exp 24 must hand-roll the CRC.
 The catch: `std.crypto`+`std.hash` pull a **large transitive closure** (~50 KB
-here; the three functions are ~1.7 KB) that `build-obj` doesn't dead-code-
+here; the three functions are ~1.2 KB) that `build-obj` doesn't dead-code-
 eliminate, so the stdlib kernels run in their own image — but they fit and run in
 64 KB.
 
@@ -61,8 +61,6 @@ stdin / EOF / stdout / exit / abort and a 4-byte cycle counter over MMIO (the
 full `$FFFx` map is in docs/01).
 
 Demonstrated:
-- **Heap** — the SDK `malloc` succeeds (500 B at `0x1aa6`) and correctly returns
-  `NULL` for 40000 B (exceeds the 64 KB space).
 - **Interactive stdin filter** (exp 16) — a C `getchar`/`putchar` loop pipes each
   byte through a **Zig** `up()` FFI worker (uppercase) until EOF; piping
   `"hello from the 6502"` yields `HELLO FROM THE 6502`, and the program reads the

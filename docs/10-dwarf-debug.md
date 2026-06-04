@@ -48,8 +48,8 @@ C++ EH is hard-off. The backend has no CFI emission at all (upstream `main`'s
 `MOSFrameLowering.cpp`/`MOSAsmPrinter.cpp` emit no `MCCFIInstruction`;
 `MOSMCAsmInfo` leaves `ExceptionsType = None`).
 
-But "no CFI" is now a *not-yet*, not a *can't*: as of mid-2026 there is an active,
-documented effort to add it.
+But "no CFI" is now a *not-yet*, not a *can't*: a documented upstream effort to add
+it landed its infrastructure but **stalled in early 2026** before the CFI core.
 
 - The official **[DWARF implementation guide](https://llvm-mos.org/wiki/DWARF_implementation_guide)**
   describes a **dual-stack CFA** — return address on the hardware stack (S, at

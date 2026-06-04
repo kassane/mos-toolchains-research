@@ -7,7 +7,7 @@ the limits are purely what each language offers.
 
 ## File embedding — 6 ways, identical bytes (exp 18)
 
-The same 32-byte `payload.bin` (bytes 1..32, sum **528**) embedded six ways; each
+The same 113-byte `payload.bin` (sum **9231**) embedded six ways; each
 exposes a byte-sum, all run in one 6502 binary on `mos-sim` (which has **no
 filesystem**, so a correct sum *proves* the bytes were embedded at compile time):
 
@@ -20,7 +20,7 @@ filesystem**, so a correct sum *proves* the bytes were embedded at compile time)
 | `@embedFile("f")` | Zig | — (relative to source, in package) | `*const [N:0]u8` (sentinel **not** in `N`) |
 | `.incbin "f"` | asm-inline | `-I<dir>` resolves the file | a `.globl` label + `.set size` |
 
-All six return **528**. Notes:
+All six return **9231**. Notes:
 - **`#embed` dialects:** clang 23 accepts it everywhere; warning-free in the
   C23-era dialects (`c23`/`gnu23`/`c2x`/`gnu2x`), but warns `c23-extensions` in
   `c17`/default. `__has_embed`, `limit()`/`prefix()`/`suffix()`/`if_empty()` and
@@ -32,7 +32,7 @@ All six return **528**. Notes:
   NES mapper headers configure cartridge hardware at compile time with
   `MAPPER_USE_4_SCREEN_NAMETABLE` ≡ `asm(".globl __mirroring\n__mirroring = 1\n…")`,
   injecting linker symbols the platform link-script consumes.
-- At `-Os` the byte-sum even **const-folds to 528** — embedding composes with CTFE.
+- At `-Os` the byte-sum even **const-folds to 9231** — embedding composes with CTFE.
 
 ## Reflection — only D and Zig can introspect (exp 19)
 

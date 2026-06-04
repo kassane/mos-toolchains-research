@@ -60,7 +60,7 @@ experiments that execute on `mos-sim`.
       std (richest: mem,sort,fmt,meta,math) / Rust `alloc::Vec` / D core.stdc+ldc.
       Float `sqrt`: Zig `std.math` & D `core.math` ✓; C `<math.h>` & no_std Rust ✗.
 - [x] Real-world mos-sim I/O (exp 16): interactive stdin filter (libc getchar +
-      Zig FFI) + heap malloc + `$FFF0` cycle counting.
+      Zig FFI) + `$FFF0` cycle counting. (Heap malloc is exercised in exp 15.)
 - [x] `zig cc` as Rust linker (exp 17): compiles MOS objs, links native LLVM-23
       ELF, but the SDK's LLVM-23 *bitcode* libc trips zig's LLVM-22 lld (cluster
       wall); use the SDK driver. Documented in docs/04.

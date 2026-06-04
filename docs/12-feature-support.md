@@ -16,8 +16,10 @@ compile = supported.)
 Highlights:
 
 - **Inline asm: Rust is the lone gap** — `core::arch::asm!` is unsupported on the
-  MOS target (rust-mos#13). clang, Zig (`asm volatile`) and LDC (LLVM-style `asm`)
-  all accept it. The idiomatic Rust workaround is fixed-address function pointers.
+  MOS target (rust-mos#13). clang, Zig (`asm volatile`) and LDC accept it (LDC needs
+  the LLVM-style `ldc.llvmasm`/`@trusted` form under `-preview=safer`; the DMD-style
+  `asm{}` block exp 14 probes is rejected as un-`@trusted` — a safety gate, not a
+  capability gap). The idiomatic Rust workaround is fixed-address function pointers.
 - **Interrupts** work in both clang (`interrupt` attribute → RTI epilogue) and Zig
   (`callconv(.{ .mos_interrupt = .{} })`). The correct Zig spelling is the
   *parameterized* union tag, not a bare enum (`callconv(.mos_interrupt)` is a
