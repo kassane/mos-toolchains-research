@@ -109,7 +109,7 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 ## Repo map
 
 ```
-experiments/01..24   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..25   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
 docs/00..14          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
                      types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /

@@ -90,6 +90,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 22 | `raii-scopeguard` | Scope-guard/RAII LIFO cleanup in all 5 (zero-cost); Zig `errdefer`, D move-semantics & `extern(C++,class)` |
 | 23 | `dynamic-debug` | Runtime PC→source on the sim: `mos-sim --profile`/`--trace` PCs symbolize back via `llvm-symbolizer` (DWARF line tables are usable) |
 | 24 | `benchmarks` | Canonical kernels (BYTE sieve / recursive fib / CRC-16) in all 5: per-kernel cycles + size (codegen spread, size/speed inverts); Zig `std.hash.crc` + `std.crypto` SHA-256 + `std.math` on a 6502; 6502-vs-65C02 |
+| 25 | `global-asm-symbols` | Real-world asm in all 5: the llvm-mos-sdk iNES global-asm linker-symbol trick (`asm(".globl x\nx=N")` → absolute symbol) — clang/C++ file-scope, Rust `global_asm!`, Zig `comptime asm`, D `__asm_trusted`; verified absolute via `llvm-nm` + read on mos-sim; + inline-asm MMIO putchar w/ clobbers |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

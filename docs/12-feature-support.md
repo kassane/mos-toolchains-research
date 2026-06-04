@@ -74,6 +74,43 @@ Highlights:
 These are compile-time capabilities; for the *runtime* ABI behavior of the
 features that do compile, see docs/02, docs/11.
 
+## Real-world asm idioms, cross-frontend (exp 25)
+
+Beyond the toy `nop`/`adc #3` probes, the llvm-mos-sdk leans on one inline-asm idiom
+pervasively: **file-scope asm that defines an absolute linker symbol**, so a linker
+script can read a compile-time constant. The NES headers build the whole iNES cartridge
+header this way (`nes/include/ines.h` → `ines-header.ld`):
+
+```c
+asm(".globl __mirroring\n__mirroring = 1");   // ld: BYTE((__mirroring & 1) << 0 | …)
+```
+
+`.globl x\nx = N` makes `x` a global **absolute** symbol whose *value* is `N` (not an
+address) — the linker reads the value directly. The same pattern drives the
+Atari-2600 / PCE / GEOS / Supervision mapper headers. All five frontends can emit it,
+but each has a *different* module-level-asm mechanism (exp 25 verifies every one with
+`llvm-nm`, then co-links all five + a C driver that reads each symbol's value on mos-sim):
+
+| frontend | module-level asm mechanism | nm |
+|--|--|:--:|
+| clang / C++ | file-scope `asm(".globl x\nx = N");` | `A x` |
+| Rust | `global_asm!(".globl x", "x = N");` | `A x` |
+| Zig | `comptime { asm(".globl x\nx = N"); }` — no `volatile`, no clobber colons at container scope | `A x` |
+| D (LDC) | `ldc.llvmasm.__asm_trusted(".globl x\nx = N", "")` in a **never-called** `@trusted` fn (D has no module-scope asm) | `A x` |
+
+For an absolute symbol `&x` *is* its value, so the driver reads each frontend's constant
+(C=10…D=50) straight out of the link — all five round-trip in one binary. Two notes:
+
+- **clang's `-c` is LTO bitcode** under the SDK driver, which defers the symbol to
+  link time (`nm` shows `-------- T`); `-fno-lto` materializes the absolute symbol in a
+  real ELF object (the other four emit ELF directly). The LTO link works either way.
+- exp 25 also carries the real-world **inline-asm MMIO** companion — a `sta` to the
+  stdout port with `A`+`memory` clobbers in each frontend (run.sh checks the emitted
+  bytes round-trip on mos-sim). Gotcha: in **LDC's raw `ldc.llvmasm.__asm`** a literal
+  `$` (as in `$fff9`) is the **operand sigil** and must be doubled (`$$fff9`);
+  clang/Zig/Rust all take `$` literally (they use `%`/`{}` for operands — verified). The
+  **decimal** address `65529` is template-identical across all five, so exp 25 uses it.
+
 ## Memory safety (exp 21)
 
 The same unsafe-op rejection battery as the espressif repo, on MOS. D `@safe`

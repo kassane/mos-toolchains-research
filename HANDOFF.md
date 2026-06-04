@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **24/24 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **25/25 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
@@ -38,6 +38,12 @@ experiments that execute on `mos-sim`.
       crc16 largest but fastest). Aligns with C-Bench-64 (llvm-mos > cc65, 2nd to
       Oscar64). + Zig `std.hash.crc` / `std.crypto` SHA-256 / `std.math` run on a
       6502 (only Zig reaches them); 6502-vs-65C02 measured (not a uniform win).
+- [x] Real-world asm idioms (exp 25): the llvm-mos-sdk iNES **global-asm linker-symbol**
+      trick (`asm(".globl x\nx=N")` → absolute symbol the linker reads) ported to all 5
+      frontends — clang/C++ file-scope `asm()`, Rust `global_asm!`, Zig
+      `comptime { asm(...); }`, D `ldc.llvmasm.__asm_trusted` in a never-called fn (no
+      module-scope asm in D). Absolute verified via `llvm-nm`, values read on mos-sim;
+      + an inline-asm MMIO putchar with `A`+`memory` clobbers (docs/12).
 - [x] Struct-ABI hole (Zig over-alignment) reproduced + fixed; zero-page address
       space incl. `@addrSpaceCast` from a 16-bit pointer (exp 08).
 - [x] Zero-cost abstractions: C++ template ties C, lambdas/closures inline away;
@@ -81,6 +87,7 @@ experiments that execute on `mos-sim`.
 | DWARF | clang v5, LDC/Rust/Zig v4, addr_size=4, no CFI (exp 11) |
 | same loop | identical result 14836; cycles C 191272 … Zig 111055 |
 | benchmark (exp 24) | sieve/fib/crc16 identical across 5 langs; size/speed inverts; SHA-256 from Zig `std.crypto` runs on a 6502 |
+| global asm (exp 25) | iNES linker-symbol trick (`asm(".globl x\nx=N")`) ported to all 5 (clang/C++ file-scope, Rust `global_asm!`, Zig `comptime asm`, D `__asm_trusted`); absolute symbol verified via `llvm-nm`, values read on mos-sim |
 
 ## Known limitations / gaps (honest)
 
