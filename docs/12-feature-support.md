@@ -18,43 +18,48 @@ Highlights:
 - **Inline asm: all four now do it.** `core::arch::asm!` (plus `global_asm!`/
   `naked_asm!`) works on MOS behind `#![feature(asm_experimental_arch)]` — register
   operands *and* clobbers, including the imaginary zero-page regs (e.g. `out("rc2")`)
-  — since **rust-mos#13 was fixed** (rebuilt toolchain 2026-06-04; verified `clc; adc
-  #3` → 8 on mos-sim, exp 14). clang and Zig (`asm volatile`) accept it directly; LDC
+  — since **rust-mos#13 was fixed** (rebuilt toolchain; verified `clc; adc #3` → 8 on
+  mos-sim, exp 14). clang and Zig (`asm volatile`) accept it directly; LDC
   needs the LLVM-style `ldc.llvmasm`/`@trusted` form under `-preview=safer` (the
   DMD-style `asm{}` block exp 14 probes is rejected as un-`@trusted` — a safety gate,
   not a capability gap).
 - **asm clobbers — one backend, four validators** (all verified, exp 14). Every
   frontend lowers inline asm into the *same* LLVM-MOS register file: GPRs `a`/`x`/`y`,
-  the hardware stack `s`, flags `c`/`v`/`p` (the backend also models `n`/`z`/`nz` but
-  barely exposes them), and the imaginary zero-page file `rc0`..`rc255` /
-  `rs0`..`rs127` (`rc0:rc1`=`rs0`=soft-stack-ptr, `rc30:rc31`=`rs15`=frame-ptr, both
-  reserved). What you may *name* as a clobber is pure frontend policy, and the four
-  diverge sharply — a representative accept/REJECT slice (exp 14 prints the table):
+  the hardware stack `s`, flags `c`/`n`/`v`/`z`/`p`, and the imaginary zero-page file
+  `rc0`..`rc255` / `rs0`..`rs127` (`rc0:rc1`=`rs0`=soft-stack-ptr, `rc30:rc31`=`rs15`=
+  frame-ptr, both reserved). What you may *name* as a clobber is pure frontend policy,
+  and the four diverge sharply — a representative accept/REJECT slice (exp 14 prints
+  the table):
 
   | token | clang | Zig | Rust | LDC |
   |--|:--:|:--:|:--:|:--:|
   | `a` (GPR) | accept | accept | accept | accept |
   | `c` (flag) | accept | accept | **REJECT** | accept |
-  | `rc2` (imaginary) | accept | **REJECT** | accept | accept |
-  | `s` (HW stack) | **REJECT** | REJECT¹ | **REJECT** | accept |
+  | `n` (flag) | **REJECT** | accept¹ | **REJECT** | accept |
+  | `rc2` (imaginary) | accept | accept | accept | accept |
+  | `s` (HW stack) | **REJECT** | accept¹ | **REJECT** | accept |
   | `foo` (bogus) | **REJECT** | **REJECT** | **REJECT** | **accept**² |
 
-  Each frontend has a distinct signature: **clang** = curated lowercase allow-list —
-  the *widest imaginary range* (all `rc`/`rs`) plus real flags (`c`/`v`/`p`, and the
-  generic `cc`), but it rejects `s`/`n`/`z`/`nz` *and* silently accepts the reserved
-  `rc0/1/30/31` (clobbering the soft-stack/frame pointer is unguarded — Rust refuses
-  these). **Zig** = packed-struct field names with **no imaginary-register token at
-  all** (`.rc2` is a field error); ¹the maintainer's pending `assembly.zig` patch adds
-  `s`/`n`/`z`, but they reach LLVM IR with **no machine effect** (byte-identical
-  `.text`). **Rust** = register classes `reg_gpr` (a/x/y) + `reg` (`rc2`..`rc29` only;
-  `rc≥32`, `rs1..14` unexposed) with the *safest ergonomics* — custom diagnostics
-  spell out why `rc0/1`, `rc30/31`, `s` are off-limits — and flags clobbered by
-  default (`options(preserves_flags)` to keep them; there is no per-flag token).
-  **LDC** = `ldc.llvmasm` hands the constraint string straight to LLVM with **zero
-  validation**; ²a typo'd `~{foo}` (or `~{rc999}`) compiles and is *silently ignored*
-  (verified identical `.text`) — maximum freedom, zero safety. (DMD-style `asm{}` has
-  no clobber slot at all.) So: clang fine-grains the *imaginary* file, Rust fine-grains
-  it *safely*, Zig only fine-grains *flags* (and inertly), LDC checks nothing.
+  Each frontend has a distinct signature. **Zig** now carries the **most complete
+  vocabulary** — the current build ships the *entire* register file as packed-struct
+  fields: `a`/`x`/`y`/`s`, all five flags `c`/`n`/`v`/`z`/`p`, and the full
+  `rc0`..`rc255` / `rs0`..`rs127` (earlier builds had **no** imaginary-register token
+  at all — a real upgrade). Those imaginary clobbers are *effective*: clobbering
+  `rc2`..`rc20` across an 8-value live range grew the body 34→40 instructions.
+  ¹`s`/`n`/`z`, however, are accepted but **machine-inert** (byte-identical `.text` —
+  the backend doesn't model them), and like clang it lets you *name* the reserved
+  `rc0/1/30/31` unguarded. **clang** = curated lowercase allow-list: the full imaginary
+  range + flags `c`/`v`/`p` (and the generic `cc`), but it rejects `s`/`n`/`z`/`nz`.
+  **Rust** = the narrowest imaginary window (`reg` = `rc2`..`rc29`; `reg_gpr` = a/x/y)
+  but the *safest ergonomics* — custom diagnostics reject `rc0/1`, `rc30/31`, `s` by
+  name; no per-flag token (flags clobbered by default), though **`clobber_abi("C")`**
+  now declares the whole C caller-saved set at once (it expands to
+  `={x},={y},={rc2}..={rc19},~{cc}` — verified in the IR). **LDC** = `ldc.llvmasm`
+  hands the constraint string straight to LLVM with **zero validation**; ²a typo'd
+  `~{foo}`/`~{rc999}` compiles and is *silently ignored* (verified identical `.text`) —
+  maximum freedom, zero safety (DMD-style `asm{}` has no clobber slot). Net: **Zig** =
+  widest *complete & effective* set; **clang** = curated reference; **Rust** = safest
+  (+ `clobber_abi` convenience); **LDC** = unchecked.
 - **Interrupts** work in both clang (`interrupt` attribute → RTI epilogue) and Zig
   (`callconv(.{ .mos_interrupt = .{} })`). The correct Zig spelling is the
   *parameterized* union tag, not a bare enum (`callconv(.mos_interrupt)` is a

@@ -98,7 +98,8 @@ experiments that execute on `mos-sim`.
 ## Next steps (if resumed)
 
 - Interrupt-handler **codegen** experiment: exp 14 already proves the `interrupt` /
-  `no_isr` attributes compile (and that Rust has no inline asm, rust-mos#13); the
+  `no_isr` attributes compile (and that Rust now has inline asm + `clobber_abi("C")`,
+  rust-mos#13 fixed); the
   remaining high-signal work is diffing the `interrupt` vs `interrupt_norecurse` vs
   `no_isr` epilogues (the SDK's `interrupt` attr emits `rti` + imaginary-reg
   save/restore).

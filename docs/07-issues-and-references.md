@@ -23,12 +23,13 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
   8-bit atomics, `cpu=mos6502` hard-coded. **Not upstream** in rustc.
 - `#35` `c_uint`/`c_int` width regressed 16→32 on a build — the FFI hazard our
   exp 03 measures (here Rust `c_int` is correctly **16-bit**).
-- `#13` **FIXED** (rebuilt toolchain, 2026-06-04): inline `asm!`, `global_asm!` and
-  `naked_asm!` work behind `#![feature(asm_experimental_arch)]`, with register
-  operands and clobbers (incl. imaginary zero-page regs like `rc2`) — verified
-  `clc; adc #3` → 8 on mos-sim (exp 14). (The issue also covered an early fixed-ROM
-  `JSR` miscompile.) The same rebuild fixed the **by-value-struct callconv** — Rust
-  now register-decomposes ≤4-byte structs (exp 12, docs/11).
+- `#13` **FIXED** (rebuilt toolchain): inline `asm!`, `global_asm!` and `naked_asm!`
+  work behind `#![feature(asm_experimental_arch)]`, with register operands and clobbers
+  (incl. imaginary zero-page regs like `rc2`) — verified `clc; adc #3` → 8 on mos-sim
+  (exp 14). (The issue also covered an early fixed-ROM `JSR` miscompile.) The same
+  rebuild fixed the **by-value-struct callconv** — Rust now register-decomposes ≤4-byte
+  structs (exp 12, docs/11). The newest rebuild also accepts **`clobber_abi("C")`**,
+  which expands to the MOS C caller-saved set `={x},={y},={rc2}..={rc19},~{cc}` (exp 14).
 - `#26` `build-std` vs `compiler-builtins` undefined `precondition_check` at link.
 - `#21` the fork carries a patched `compiler-builtins` + `cargo` — the maintenance
   burden that keeps it downstream.
@@ -67,6 +68,11 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - **`@typeInfo` Struct API drift:** the comptime field list is now parallel
   `field_names`/`field_types` arrays (`Type` moved to `std.lang`), not the older
   `.fields` list (exp 19).
+- **asm clobber vocabulary grew:** the `.mos` clobber struct in `std/lang/assembly.zig`
+  now ships the *entire* register file — `a`/`x`/`y`/`s`, flags `c`/`n`/`v`/`z`/`p`, and
+  the imaginary `rc0`..`rc255` / `rs0`..`rs127`. Earlier builds exposed **no**
+  imaginary-register token at all; the new ones make `rc`/`rs` clobbers effective (s/n/z
+  remain machine-inert). Another rolling-tag capability bump (exp 14, docs/12).
 - **`@llvm.returnaddress` is unlowerable** → Zig `-ODebug` fails on safety-checked
   ops (use wrapping ops / a release mode; exp 11, docs/10). **ReleaseSafe's default
   panic handler crashes** the LLVM-22 backend's `MachineCopyPropagation` (upstream
@@ -85,12 +91,19 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - zig-mos: https://github.com/kassane/zig-mos-bootstrap ·
   https://github.com/kassane/zig-mos-examples ·
   https://kassane.github.io/blog/zig_mos_6502/
-- Toolchain tarballs are pinned in `scripts/setup.sh`. The `0.1.0` tag's **rust-mos
-  was rebuilt 2026-06-04** (tarball `3c7c1407…`) — fixing `asm!`/`global_asm!`/
-  `naked_asm!` (#13) and the by-value-struct callconv; the rustc *binary* is unchanged
-  (`222ecc67`), so the fix rides in the target specs/std (`c_int`=16 and the G_UCMP
-  `lto` workaround still hold). **Zig's rolling `0.17.0-dev` tag** also drifts (the
-  June-2026 build fixed Zig `c_int`→16-bit and reshaped `@typeInfo`). Pin a build for
-  reproducibility — these forks move fast.
+- Toolchain tarballs are pinned (SHA256) in `scripts/setup.sh`; the download verifies
+  each against its pin and aborts on mismatch. Current pins (verified 2026-06):
+  - zig  `8f45d896…` (rolling `0.17.0-dev`)
+  - ldc2 `40c2f8c8…` (`0.1.0`)
+  - rust `26f8e362…` (`0.1.0`)
+
+  These forks move fast — **all three were rebuilt again** this round. **rust-mos**
+  moved `3c7c1407…` → `26f8e362…`, but the rustc *version* is unchanged (`1.98.0-dev`;
+  the binary reports no commit hash), so the fixes ride in the bundled target specs/std:
+  `c_int`=16, the G_UCMP `lto` workaround, and the `asm!`/callconv #13 fix all still
+  hold, and the newest adds `clobber_abi("C")`. **Zig's rolling `0.17.0-dev`** keeps drifting too: this build
+  ships the full asm-clobber register file (was: none) on top of the earlier
+  `c_int`→16-bit and `@typeInfo` reshapes. Pin a build for reproducibility — when a
+  rolling tag rolls, the SHA check trips and the pin must be refreshed.
 - Methodology mirrors https://github.com/kassane/espressif-toolchains-research
   (the Xtensa/RISC-V sibling of this study).

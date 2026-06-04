@@ -24,7 +24,7 @@ rc=$?
 if grep -q 'inline assembly is unsupported on this target' "$B/ar.err"; then
   echo "  rust inline-asm  : NO  (rust-mos#13 — needs the rebuilt toolchain)"
 else
-  echo "  rust inline-asm  : $(ok $rc)  (asm!/global_asm!/naked_asm! + operands & clobbers, behind #![feature(asm_experimental_arch)]; #13 fixed)"
+  echo "  rust inline-asm  : $(ok $rc)  (asm!/global_asm!/naked_asm! + operands, clobbers & clobber_abi(\"C\"), behind #![feature(asm_experimental_arch)]; #13 fixed)"
 fi
 
 echo "### asm clobber vocabulary — ONE LLVM-MOS register file, four frontend validators ###"
@@ -38,13 +38,13 @@ RCORE=$(ls "$HERE"/rust-asm/target/mos-unknown-none/release/deps/libcore-*.rlib 
 cbr(){ [ -n "$RCORE" ] || return 2; printf '#![no_std]\n#![feature(asm_experimental_arch)]\nuse core::arch::asm;\n#[no_mangle] pub extern "C" fn f(){ unsafe { asm!("nop", out("%s") _, options(nomem,nostack)); } }\n' "$1">"$B/cb.rs"; RUSTC_BOOTSTRAP=1 "$RUSTC" --target mos-unknown-none -Ctarget-cpu=$CPU --crate-type=lib --emit=obj -L "$(dirname "$RCORE")" --extern core="$RCORE" -o "$B/cbr.o" "$B/cb.rs" 2>/dev/null; }
 res(){ case "$1" in 0) echo accept;; 2) echo n/a;; *) echo REJECT;; esac; }
 printf "  %-7s %-8s %-8s %-8s %-8s\n" token clang zig rust ldc
-for t in a c rc2 s foo; do
+for t in a c n rc2 s foo; do
   cbcc "$t"; c=$?; cbz "$t"; z=$?; cbr "$t"; r=$?; cbd "$t"; d=$?
   printf "  %-7s %-8s %-8s %-8s %-8s\n" "$t" "$(res $c)" "$(res $z)" "$(res $r)" "$(res $d)"
 done
-echo "  clang=curated allow-list (a/x/y,c/v/p,cc,rc0..255,rs0..127,memory; rejects s/n/z)"
-echo "  zig  =struct fields (no imaginary-reg token; s/n/z only with the pending assembly.zig patch — and machine-inert)"
-echo "  rust =reg_gpr a/x/y + reg rc2..rc29; flags clobbered-by-default (no per-flag token)"
+echo "  clang=curated allow-list (a/x/y,c/v/p,cc,rc0..255,rs0..127,memory; rejects s/n/z/nz)"
+echo "  zig  =now the FULL register file (a/x/y/s, c/n/v/z/p, rc0..255/rs0..127); imaginary clobbers effective, s/n/z accepted-but-inert"
+echo "  rust =reg_gpr a/x/y + reg rc2..rc29; flags clobbered-by-default (no per-flag token); clobber_abi(\"C\") = {x,y,rc2..rc19,cc}"
 echo "  ldc  =raw LLVM constraints, NO validation — bogus 'foo'/'rc999' compile but are silently ignored (footgun)"
 
 echo "### interrupt handler attribute (clang) ###"
