@@ -96,11 +96,11 @@ experiments that execute on `mos-sim`.
 
 ## Next steps (if resumed)
 
-- Add a by-value (not by-pointer) struct-argument sweep across all 5 langs.
-- Add an interrupt-handler / inline-asm interop probe (`mos_interrupt`,
-  `__attribute__((no_isr))`); note Rust has no inline asm on MOS (rust-mos#13). The
-  SDK's `interrupt` attr emits `rti` + imaginary-reg save/restore — its own codegen
-  experiment (vs `interrupt_norecurse`/`no_isr`) would be high-signal.
+- Interrupt-handler **codegen** experiment: exp 14 already proves the `interrupt` /
+  `no_isr` attributes compile (and that Rust has no inline asm, rust-mos#13); the
+  remaining high-signal work is diffing the `interrupt` vs `interrupt_norecurse` vs
+  `no_isr` epilogues (the SDK's `interrupt` attr emits `rti` + imaginary-reg
+  save/restore).
 - Try a non-base CPU (`mosw65816`, `mos65c02`) end-to-end to see if `-mattr`
   starts to matter (exp 06 only covers base mos6502).
 - A C64 `.prg` build (mos-c64-clang) running in VICE for a hardware cross-check.
