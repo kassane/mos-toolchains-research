@@ -19,7 +19,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | Inline asm | ✅ | ✅ | ✅ | ✅ | Rust via `asm_experimental_arch` (rust-mos#13 fixed); exp 14 |
 | LTO required | optional | ✅ required | optional | optional | rust target sets it |
 | Float across FFI | ❌ avoid | ❌ avoid | ❌ avoid | ❌ avoid | soft-float rough (llvm-mos#10) |
-| Float math (`sqrt`) on MOS | ❌ no `<math.h>` | ❌ std-only | ✅ `core.math` | ✅ `std.math` | soft-float; exp 15 |
+| Float math (`sqrt`) on MOS | ❌ no `<math.h>` | ❌ std-only | ✅ `core.math` | ✅ `std.math` | soft-float; *compiles* (exp 24 runs integer `isqrt`) |
 | Compile-time eval (CTFE) | ⚠️ C++ `constexpr` only | ✅ `const fn` | ✅ CTFE | ✅ `comptime` | C has none; exp 10 |
 | Compile-time reflection | ❌ | ❌ | ✅ `__traits` | ✅ `@typeInfo` | C++ P2996 = C++26; exp 19 |
 | File embedding | ✅ `#embed` | ✅ `include_bytes!` | ✅ `import()` | ✅ `@embedFile` | also `.incbin`; exp 18 |

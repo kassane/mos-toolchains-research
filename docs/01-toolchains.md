@@ -43,7 +43,7 @@ rustflags = ["-Ctarget-cpu=mos6502"]
 ```
 
 `lto = true` is effectively required: without it the native codegen of
-`core`'s `Ord::cmp` hits `unable to legalize G_UCMP s8 from s32` (MOS GlobalISel
+`core::panic::Location::cmp` hits `unable to legalize G_UCMP s8 from s32` (MOS GlobalISel
 gap). Build with `RUSTC_BOOTSTRAP=1`. `mos-unknown-none` is **not** upstream.
 
 ## Zig — 0.17.0-mos-dev (bundled clang/LLVM 22)

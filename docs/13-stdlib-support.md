@@ -10,7 +10,7 @@ interactive program on `mos-sim`.
 |------|-------------------|-------|
 | **C** | full freestanding **libc**: `printf`, `malloc`/`free`, `getchar`/`putchar`, `string.h`, `ctype.h`, `setjmp` | the SDK's `mos-platform/common` |
 | **C++** | **minimal STL subset**: `<array>`, `<type_traits>`, `<utility>`, `<iterator>`, `<new>`, `min_element`/`max_element` | **no `std::sort`**; `std::array` needs `{{…}}` and isn't a full aggregate |
-| **Zig** | **rich `std` subset**: `std.mem` (`sort`,`min`,`max`), `std.sort`, `std.fmt.bufPrint` (`{d}`/`{x}`), `std.meta.fields`, `std.math`, **`std.hash`/`std.crypto`** (exp 24) | comptime-instantiated; the most capable on MOS |
+| **Zig** | **rich `std` subset**: `std.mem` (`sort`,`min`,`max`), `std.sort`, `std.fmt.bufPrint` (`{d}`/`{x}`), `std.meta.fieldNames`/`fieldTypes`, `std.math`, **`std.hash`/`std.crypto`** (exp 24) | comptime-instantiated; the most capable on MOS |
 | **Rust** | `core` + **`alloc`** (`Vec`/`Box`) once you supply a `#[global_allocator]` | no `std`; here the allocator wraps the SDK `malloc`/`free` |
 | **D** | `-betterC`: `core.stdc.string`, `core.bitop`, **all `ldc.*`** (`intrinsics`/`attributes`/`llvmasm`), `core.math` | **`core.stdc.stdio`/`stdlib` are NOT ported** (`static assert "unsupported system"` / undefined `c_long`); no Phobos (`std.*`), so hand-declare `extern(C) printf` |
 
@@ -19,20 +19,22 @@ D library-import specifics (probed): `core.stdc.string` ✓, `core.bitop` ✓,
 building-blocks compile but **`Mallocator` fails** (it needs the unported
 `core.stdc.stdlib`). `import std.math` fails (`undefined c_long`).
 
-## Math: who can do float on a CPU with no FPU? (exp 15)
+## Math: who can do float on a CPU with no FPU? (compile-capability)
 
-Soft-float, and the answer is surprising — **D and Zig beat C**:
+Soft-float, and the answer is surprising — **D and Zig beat C**. This is a *compile*
+capability (does the `sqrt` libcall build?); no experiment runs float `sqrt` — the
+only sqrt actually executed is integer `isqrt` in exp 24:
 
-| | float math (e.g. `sqrt(2)`) | integer math |
+| | float math (e.g. `sqrt`) | integer math |
 |--|--|--|
 | C / C++ | ❌ the SDK `<math.h>` declares **no `sqrt`/`sin`/`pow`** | `abs`/`labs` only |
-| **Zig** | ✅ `std.math.sqrt(f32)` → `1.414` (own soft-float) | ✅ `std.math.gcd`, … |
-| **D** | ✅ `core.math.sqrt` → `1.414` (LDC soft-float libcall) | ✅ |
+| **Zig** | ✅ `std.math.sqrt(f32)` **compiles** (own soft-float) | ✅ `std.math.gcd`, … |
+| **D** | ✅ `core.math.sqrt` **compiles** (LDC soft-float libcall) | ✅ |
 | Rust | ❌ `f32::sqrt` is **std-only** (not in `core`; needs a `libm` crate) | ✅ `u16::pow`, … in `core` |
 
-So on bare MOS, Zig (`std.math`) and D (`core.math`) compute `√2 = 1.41421`
-correctly via software float, while C (`math.h` is essentially empty) and
-`no_std` Rust cannot without an external libm. Integer math is universal.
+So on bare MOS, Zig (`std.math`) and D (`core.math`) **compile** software-float
+`sqrt`, while C (`math.h` is essentially empty) and `no_std` Rust cannot without an
+external libm. Integer math is universal (exp 24 runs Zig's integer `isqrt`).
 
 ## Zig `std` does hashing & crypto on a 6502 (exp 24)
 
@@ -62,10 +64,10 @@ full `$FFFx` map is in docs/01).
 
 Demonstrated:
 - **Interactive stdin filter** (exp 16) — a C `getchar`/`putchar` loop pipes each
-  byte through a **Zig** `up()` FFI worker (uppercase) until EOF; piping
-  `"hello from the 6502"` yields `HELLO FROM THE 6502`, and the program reads the
-  `$FFF0` counter to report `36 chars in 1825 cycles`. Real stdin→stdout I/O plus
-  cross-language FFI plus cycle measurement in one runnable 6502 image.
+  byte through a **Zig** `up()` FFI worker (uppercase) until EOF; piping a 2-line
+  input (`hello from the 6502` / `mixed Case 123!`) yields it uppercased, and the
+  program reads the `$FFF0` counter to report `36 chars in 1825 cycles`. Real
+  stdin→stdout I/O plus cross-language FFI plus cycle measurement in one 6502 image.
 
 ## MMIO hardware-register parity (exp 20)
 

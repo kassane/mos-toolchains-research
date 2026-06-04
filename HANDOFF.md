@@ -80,7 +80,7 @@ experiments that execute on `mos-sim`.
 |--|--------|
 | datalayout (all 4) | `e-m:e-p:16:8-p1:8:8-i16:8-i32:8-i64:8-f32:8-f64:8-a:8-Fi8-n8` |
 | FFI matrix | mos-sim exit 0, 0 undefined symbols, ELF e_machine `0x1966` |
-| `int` width | C 2 / D 4 / Rust i32 4 / Zig i32 4; Zig `c_int` 4 (≠ C 2); Rust `c_int` 2 |
+| `int` width | C 2 / D 4 / Rust i32 4 / Zig i32 4; Zig `c_int` 2 (now = C; was 4 on older builds); Rust `c_int` 2 |
 | struct `{u8,u32,u8}` | C/C++/Rust/D/Zig-align1 = 6 B ok; Zig plain = 12 B garbage |
 | by-value small struct | all five decompose→registers (D & Rust were indirect→garbage, both fixed in callconv rebuilds; exp 12) |
 | i64/signed/callback | shared across all 5 (exp 13) |

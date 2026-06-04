@@ -11,7 +11,7 @@ int/i32 kw  2   4   -   -     <- C 'int'  vs D 'int'  DIFFER (footgun)
 long        4   8   -   -     <- C 'long' vs D 'long' DIFFER
 size_t      2   2   2   2     <- agree (== pointer)
 pointer     2   2   2   2
-c_int       2   -   4   2     <- Zig c_int=4 != C int=2 (footgun); Rust c_int=2 OK
+c_int       2   -   2   2     <- all 16-bit now (Zig c_int matches C; was 32-bit on older Zig); Rust c_int=2 OK
 i32 fixed   4   4   4   4     <- agree
 ```
 

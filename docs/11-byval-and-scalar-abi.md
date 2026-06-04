@@ -29,7 +29,7 @@ The IR shows exactly why — same 2-byte `struct Small{u8,u8}`:
 | clang | `@c_small(i8, i8)` | decomposed → A,X (official MOS C ABI) |
 | Zig | `@zig_small(%Small)` | first-class aggregate → backend decomposes → A,X |
 | Rust | decomposed → A,X (callconv fix; was `ptr` indirect) | matches the MOS C ABI |
-| LDC | `@d_small(%small.Small %s_arg)` (was `ptr byval(%Small)`) | now first-class aggregate → backend decomposes → A,X |
+| LDC | `@d_small(%Small)` (was `ptr byval(%Small)`) | now first-class aggregate → backend decomposes → A,X |
 
 Both holdouts have been fixed in their rebuilds: **Rust**'s callconv first, then
 **D (LDC)** — the updated LDC drops the `byval` indirection and passes `Small` as a

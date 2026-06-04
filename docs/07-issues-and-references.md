@@ -34,7 +34,7 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - `#21` the fork carries a patched `compiler-builtins` + `cargo` — the maintenance
   burden that keeps it downstream.
 - Our own observation (exp 07/01): native `core` codegen hits
-  `unable to legalize G_UCMP` in `Ord::cmp`; `lto = true` is the workaround.
+  `unable to legalize G_UCMP` in `core::panic::Location::cmp`; `lto = true` is the workaround.
 
 ## ldc2 / LDC (D)
 
