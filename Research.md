@@ -133,6 +133,14 @@ result `14836`, but:
 C/C++ are byte-identical (same frontend); Zig/D are leanest here. Useful as a
 caution: "same backend" guarantees *interop*, not *parity*.
 
+**Recognised kernels (exp 24)** sharpen this: the BYTE sieve, recursive fib, and
+CRC-16 in all five languages give identical canonical results, but the per-kernel
+size/speed ranking *inverts* (Zig smallest code yet slowest on sieve/fib; D's
+crc16 largest but fastest) — and only Zig can pull the same CRC, a real
+**SHA-256** (`std.crypto`), and `sqrt` straight from its stdlib on a 6502. The
+numbers track the community C-Bench-64 suite (llvm-mos beats cc65, 2nd to Oscar64),
+but the axis here is five *languages* on one backend, not six *compilers*.
+
 ## 7. The `ldc2` cpu-features footnote (exp 06)
 
 `ldc2 -mcpu=mos6502` reports `features ''` — the same gap as ldc#4919 (which is

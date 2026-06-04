@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 23 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 24 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its
@@ -89,6 +89,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 21 | `safety` | `@safe`/borrow rejection battery (D & Rust) vs C (none); runtime bounds check: Rust traps, Zig traps w/ `mos_panic` (default handler crashes LLVM-22) |
 | 22 | `raii-scopeguard` | Scope-guard/RAII LIFO cleanup in all 5 (zero-cost); Zig `errdefer`, D move-semantics & `extern(C++,class)` |
 | 23 | `dynamic-debug` | Runtime PC→source on the sim: `mos-sim --profile`/`--trace` PCs symbolize back via `llvm-symbolizer` (DWARF line tables are usable) |
+| 24 | `benchmarks` | Canonical kernels (BYTE sieve / recursive fib / CRC-16) in all 5: per-kernel cycles + size (codegen spread, size/speed inverts); Zig `std.hash.crc` + `std.crypto` SHA-256 + `std.math` on a 6502; 6502-vs-65C02 |
 
 > This repo studies *unofficial* 6502 support. None of these targets are upstream
 > in clang/rustc/zig/ldc; pin one toolchain set (the versions above) — there is no

@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **23/23 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **24/24 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
@@ -32,6 +32,12 @@ experiments that execute on `mos-sim`.
 - [x] Type-width divergences characterized at runtime + compile time (exp 03, 07).
 - [x] Cross-LLVM-version IR mixing + cross-language LTO (exp 04).
 - [x] Codegen/cycle comparison (exp 05); `ldc -mattr` parity (exp 06).
+- [x] Benchmark suite (exp 24): BYTE sieve / recursive fib / CRC-16 in all 5
+      (canonical 1899 / 46368 / 0x7E55), per-kernel cycles + size -- codegen spread
+      is real and size/speed **inverts** (Zig smallest code, often slowest; D's
+      crc16 largest but fastest). Aligns with C-Bench-64 (llvm-mos > cc65, 2nd to
+      Oscar64). + Zig `std.hash.crc` / `std.crypto` SHA-256 / `std.math` run on a
+      6502 (only Zig reaches them); 6502-vs-65C02 measured (not a uniform win).
 - [x] Struct-ABI hole (Zig over-alignment) reproduced + fixed; zero-page address
       space incl. `@addrSpaceCast` from a 16-bit pointer (exp 08).
 - [x] Zero-cost abstractions: C++ template ties C, lambdas/closures inline away;
@@ -72,6 +78,7 @@ experiments that execute on `mos-sim`.
 | i64/signed/callback | shared across all 5 (exp 13) |
 | DWARF | clang v5, LDC/Rust/Zig v4, addr_size=4, no CFI (exp 11) |
 | same loop | identical result 14836; cycles C 191272 … Zig 111055 |
+| benchmark (exp 24) | sieve/fib/crc16 identical across 5 langs; size/speed inverts; SHA-256 from Zig `std.crypto` runs on a 6502 |
 
 ## Known limitations / gaps (honest)
 

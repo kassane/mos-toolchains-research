@@ -1,4 +1,4 @@
-# 13 — Standard-library reach, math & real-world I/O (exp 15, 16)
+# 13 — Standard-library reach, math & real-world I/O (exp 15, 16, 24)
 
 docs/00–12 covered the ABI. This is about how much of each language's *standard
 library* actually works on bare MOS, the float-math story, and a real
@@ -10,7 +10,7 @@ interactive program on `mos-sim`.
 |------|-------------------|-------|
 | **C** | full freestanding **libc**: `printf`, `malloc`/`free`, `getchar`/`putchar`, `string.h`, `ctype.h`, `setjmp` | the SDK's `mos-platform/common` |
 | **C++** | **minimal STL subset**: `<array>`, `<type_traits>`, `<utility>`, `<iterator>`, `<new>`, `min_element`/`max_element` | **no `std::sort`**; `std::array` needs `{{…}}` and isn't a full aggregate |
-| **Zig** | **rich `std` subset**: `std.mem` (`sort`,`min`,`max`), `std.sort`, `std.fmt.bufPrint` (`{d}`/`{x}`), `std.meta.fields`, `std.math` | comptime-instantiated; the most capable on MOS |
+| **Zig** | **rich `std` subset**: `std.mem` (`sort`,`min`,`max`), `std.sort`, `std.fmt.bufPrint` (`{d}`/`{x}`), `std.meta.fields`, `std.math`, **`std.hash`/`std.crypto`** (exp 24) | comptime-instantiated; the most capable on MOS |
 | **Rust** | `core` + **`alloc`** (`Vec`/`Box`) once you supply a `#[global_allocator]` | no `std`; here the allocator wraps the SDK `malloc`/`free` |
 | **D** | `-betterC`: `core.stdc.string`, `core.bitop`, **all `ldc.*`** (`intrinsics`/`attributes`/`llvmasm`), `core.math` | **`core.stdc.stdio`/`stdlib` are NOT ported** (`static assert "unsupported system"` / undefined `c_long`); no Phobos (`std.*`), so hand-declare `extern(C) printf` |
 
@@ -33,6 +33,26 @@ Soft-float, and the answer is surprising — **D and Zig beat C**:
 So on bare MOS, Zig (`std.math`) and D (`core.math`) compute `√2 = 1.41421`
 correctly via software float, while C (`math.h` is essentially empty) and
 `no_std` Rust cannot without an external libm. Integer math is universal.
+
+## Zig `std` does hashing & crypto on a 6502 (exp 24)
+
+The exp 24 benchmark adds a stdlib dimension, and Zig's reach is striking — these
+all compile `mos-freestanding` and run on mos-sim, byte-exact:
+
+| Zig std | result | cycles |
+|--|--|--|
+| `std.hash.crc.Crc16Xmodem` | crc16 = 0x7E55 | **29.5 K** — table-based, vs the hand-rolled bit-serial 109 K (3.7×) |
+| `std.crypto.hash.sha2.Sha256` | SHA-256 byte-exact vs host | 639 K / 256 B |
+| `std.math.sqrt` | isqrt(64000) = 252 | 1.5 K |
+
+A real cryptographic hash on a 1975 8-bit CPU, pulled from the language stdlib
+with zero porting. **Only Zig** can do this on bare-metal MOS: C/C++ (STL subset),
+Rust (`core`), and D (`-betterC`, no Phobos `std.digest`) have no hashing/crypto
+in their reachable stdlib — every other language in exp 24 must hand-roll the CRC.
+The catch: `std.crypto`+`std.hash` pull a **large transitive closure** (~50 KB
+here; the three functions are ~1.7 KB) that `build-obj` doesn't dead-code-
+eliminate, so the stdlib kernels run in their own image — but they fit and run in
+64 KB.
 
 ## Real-world mos-sim use (exp 16)
 
