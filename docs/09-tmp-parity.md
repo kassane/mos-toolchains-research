@@ -48,7 +48,7 @@ context but are forced compile-time in a const context.
 | compile-time loops | ✅ | ✅ (+`static foreach`) | ✅ `while`/`loop` |
 | value/type generics | ✅ NTTP + templates + partial spec | ✅ value params + `static if` | ⚠️ const generics only |
 | **introspection/reflection** | ⚠️ `type_traits`/`if constexpr`/concepts (full reflection only C++26) | ✅ **`__traits`/`is()`/`static if/foreach`** | ❌ none at compile time |
-| float at compile time | ✅ | ✅ | ❌ banned in const fn |
+| float at compile time | ✅ | ✅ | ✅ (const fn, since Rust 1.82) |
 | heap at compile time | ❌ | ❌ (escaping) | ❌ |
 
 They **converge on computation** (all fold the factorial identically) but
@@ -57,4 +57,4 @@ They **converge on computation** (all fold the factorial identically) but
 deferred to C++26), Rust is weakest (const generics give value-genericity but no
 compile-time reflection). All of it is freestanding-safe — CTFE needs no runtime,
 so `-betterC`/`no_std`/freestanding don't restrict the *computation*, only the
-data types it may use (no heap; Rust additionally bans compile-time float).
+data types it may use (no heap at compile time).
