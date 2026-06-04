@@ -27,7 +27,8 @@ All six return **9231**. Notes:
   the vendor `clang::offset()` are supported. C++ `#embed` is a *Clang extension*
   (P1967, standard only in C++26).
 - **The asm-inline `.incbin`** route works in any frontend with inline asm
-  (C/C++/D/Zig) but **not Rust** (no inline asm on MOS, rust-mos#13). It is the
+  (C/C++/D/Zig; Rust used `include_bytes!` instead — its inline asm was unsupported
+  then, rust-mos#13, now fixed). It is the
   classic pre-`#embed` technique — and the **SDK itself uses the same idea**: the
   NES mapper headers configure cartridge hardware at compile time with
   `MAPPER_USE_4_SCREEN_NAMETABLE` ≡ `asm(".globl __mirroring\n__mirroring = 1\n…")`,

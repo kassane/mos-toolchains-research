@@ -15,11 +15,22 @@ compile = supported.)
 
 Highlights:
 
-- **Inline asm: Rust is the lone gap** — `core::arch::asm!` is unsupported on the
-  MOS target (rust-mos#13). clang, Zig (`asm volatile`) and LDC accept it (LDC needs
-  the LLVM-style `ldc.llvmasm`/`@trusted` form under `-preview=safer`; the DMD-style
-  `asm{}` block exp 14 probes is rejected as un-`@trusted` — a safety gate, not a
-  capability gap). The idiomatic Rust workaround is fixed-address function pointers.
+- **Inline asm: all four now do it.** `core::arch::asm!` (plus `global_asm!`/
+  `naked_asm!`) works on MOS behind `#![feature(asm_experimental_arch)]` — register
+  operands *and* clobbers, including the imaginary zero-page regs (e.g. `out("rc2")`)
+  — since **rust-mos#13 was fixed** (rebuilt toolchain 2026-06-04; verified `clc; adc
+  #3` → 8 on mos-sim, exp 14). clang and Zig (`asm volatile`) accept it directly; LDC
+  needs the LLVM-style `ldc.llvmasm`/`@trusted` form under `-preview=safer` (the
+  DMD-style `asm{}` block exp 14 probes is rejected as un-`@trusted` — a safety gate,
+  not a capability gap).
+- **asm clobbers, Zig vs Rust** (both verified on the new build): **Zig** uses
+  `.{ .a, .x, .y, .c, .v, .p, .memory }` — fine-grained *flag* clobbers (carry /
+  overflow / processor-status), but **no imaginary-register token**. **Rust** uses
+  register classes — `a`/`x`/`y` (GPR) and `rc2`..`rc29` (imaginary 8-bit scratch)
+  via `out("…")` — with flags clobbered by default (`options(preserves_flags)` to
+  keep them); `rc0`/`rc1` (`rs0`, soft-SP), `rc30`/`rc31` (`rs15`, frame-ptr) and `s`
+  (HW SP) are reserved. Complementary granularity: Zig fine-grains the flags, Rust
+  fine-grains the imaginary registers.
 - **Interrupts** work in both clang (`interrupt` attribute → RTI epilogue) and Zig
   (`callconv(.{ .mos_interrupt = .{} })`). The correct Zig spelling is the
   *parameterized* union tag, not a bare enum (`callconv(.mos_interrupt)` is a

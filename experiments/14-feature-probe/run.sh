@@ -15,14 +15,16 @@ printf 'export fn f() void { asm volatile ("nop"); }\n' > "$B/a.zig"
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/az.o" "$B/a.zig" 2>/dev/null; echo "  zig inline-asm   : $(ok $?)"
 printf 'module a; extern(C) void f(){ asm { "nop"; } }\n' > "$B/a.d"
 "$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$B/a.d" -of="$B/ad.o" 2>/dev/null; echo "  ldc inline-asm   : $(ok $?)  (LDC uses LLVM-style asm; betterC)"
-# Rust: build via the rust-asm/ crate (build-std supplies `core`) so the ONLY
-# possible failure is asm! support itself, not a missing-core false negative.
+# Rust: the rust-asm/ crate uses asm! with #![feature(asm_experimental_arch)] +
+# register clobbers (incl. the imaginary zero-page reg rc2), built via build-std.
+# rust-mos#13 is FIXED in the rebuilt toolchain (2026-06-04), so this COMPILES
+# (older builds emitted 'inline assembly is unsupported on this target').
 ( cd "$HERE/rust-asm" && RUSTC_BOOTSTRAP=1 PATH="$RUSTBIN:$PATH" "$CARGO" build --release >"$B/ar.err" 2>&1 )
 rc=$?
 if grep -q 'inline assembly is unsupported on this target' "$B/ar.err"; then
-  echo "  rust inline-asm  : NO  (rust-mos#13: 'inline assembly is unsupported on this target')"
+  echo "  rust inline-asm  : NO  (rust-mos#13 — needs the rebuilt toolchain)"
 else
-  echo "  rust inline-asm  : $(ok $rc)"
+  echo "  rust inline-asm  : $(ok $rc)  (asm!/global_asm!/naked_asm! + operands & clobbers, behind #![feature(asm_experimental_arch)]; #13 fixed)"
 fi
 
 echo "### interrupt handler attribute (clang) ###"

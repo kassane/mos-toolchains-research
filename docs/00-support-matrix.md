@@ -16,7 +16,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | C-compatible struct layout | ✅ | ✅ `#[repr(C)]` | ✅ | ⚠️ `align(1)` | Zig over-aligns (exp 08) |
 | Zero-page address space | ✅ AS(1) | ❌ (not exposed) | ❌ | ✅ `.zp` | exp 08 |
 | Standard library on MOS | ⚠️ freestanding libc | ⚠️ `core`/`alloc` | ❌ `-betterC` only | ⚠️ `std` partial | docs/01 |
-| Inline asm | ✅ | ❌ | ✅ | ✅ | rust-mos#13 (exp 14) |
+| Inline asm | ✅ | ✅ | ✅ | ✅ | Rust via `asm_experimental_arch` (rust-mos#13 fixed); exp 14 |
 | LTO required | optional | ✅ required | optional | optional | rust target sets it |
 | Float across FFI | ❌ avoid | ❌ avoid | ❌ avoid | ❌ avoid | soft-float rough (llvm-mos#10) |
 | Float math (`sqrt`) on MOS | ❌ no `<math.h>` | ❌ std-only | ✅ `core.math` | ✅ `std.math` | soft-float; exp 15 |

@@ -15,8 +15,8 @@ small(40,2)->42   big sum->46         small-struct ABI
 C    42   46   decompose OK
 C++  42   46   decompose OK
 Zig  42   46   decompose OK
-Rust 66   46   DIVERGES (indirect)     <- reads garbage
-D   248   46   DIVERGES (indirect)     <- reads garbage
+Rust 42   46   now-matches(!)          <- callconv fix (was 66, indirect)
+D   215   46   DIVERGES (indirect)     <- reads garbage (LDC still indirect)
 ```
 
 The IR shows exactly why — same 2-byte `struct Small{u8,u8}`:
@@ -26,11 +26,12 @@ The IR shows exactly why — same 2-byte `struct Small{u8,u8}`:
 | clang | `@c_small(i8, i8)` | decomposed → A,X (official MOS C ABI) |
 | Zig | `@zig_small(%Small)` | first-class aggregate → backend decomposes → A,X |
 | LDC | `@d_small(ptr byval(%Small))` | **indirect** — expects a pointer |
-| Rust | `@rs_small(ptr readonly align 1)` | **indirect** — expects a pointer |
+| Rust | now **decomposed → A,X** (callconv fix 2026-06; was `ptr` indirect) | matches the MOS C ABI |
 
-A C caller decomposes into registers; Rust/D read those register bytes as a
-*pointer* and dereference garbage. So **by-value structs ≤4 bytes are not FFI-safe
-between {C,C++,Zig} and {Rust,D}** on MOS. The **>4-byte path agrees** (everyone
+A C caller decomposes into registers; **D (LDC)** still reads those register bytes as
+a *pointer* and dereferences garbage (Rust used to as well — its callconv was fixed
+in the 2026-06-04 rust-mos rebuild). So **by-value structs ≤4 bytes are not FFI-safe
+between {C,C++,Zig,Rust} and {D}** on MOS. The **>4-byte path agrees** (everyone
 uses an sret/byref pointer — `define void @c_mkbig(ptr ... sret(...))`), which is
 why `Big` round-trips for all five.
 

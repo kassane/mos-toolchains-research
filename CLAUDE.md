@@ -70,11 +70,13 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    exceptions, TypeInfo, dynamic/associative arrays. `extern(C)` for FFI; LDC
    predefines `version(MOS6502)`. D `size_t` is fixed to 2 bytes in LDC 1.42
    (the old dlang-mos-hello-world#1 `i32` bug is gone, docs/07).
-7. **By-value structs ≤4 bytes are NOT FFI-safe between {C,C++,Zig} and {Rust,D}.**
-   clang/Zig decompose them into registers (the MOS C ABI); Rust/D pass them
-   indirectly (`byval`/`ptr`), so a small struct passed by value corrupts across
-   that boundary. Pass aggregates **by pointer** (all agree; >4-byte sret also
-   agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
+7. **By-value structs ≤4 bytes: only D is now the FFI hazard.** clang/Zig/**Rust**
+   decompose them into registers (the MOS C ABI); **D (LDC)** still passes them
+   indirectly (`byval`/`ptr`), so a small struct by value corrupts across a D↔other
+   boundary. (Rust used to be indirect too — the rebuilt toolchain's callconv fix,
+   2026-06-04, moved it into the decompose camp; exp 12 prints `Rust now-matches(!)`,
+   `D DIVERGES`.) Pass aggregates **by pointer** to be safe (all agree; >4-byte sret
+   also agrees). docs/11, exp 12. Reverse-engineered from the IR parameter lowering.
 8. **Debug builds & runtime safety:** Zig `-ODebug` fails (`@llvm.returnaddress`;
    plus an SSP stack-protector lowering failure — use a release mode). That
    returnaddress legalize gap is **both clusters**: SDK clang 23 also can't lower
@@ -88,8 +90,9 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    `kassane/zig-mos-examples` (`sdk/panic.zig`, trivial `outOfBounds`→`while(true){}`)
    → ReleaseSafe traps cleanly (exp 21). Rust's bounds-check works out of the box
    (panic=abort, LLVM-23); Rust dev profile fails the G_UCMP gap — use
-   `lto=true`+`debug=2`. Inline asm works in clang/Zig/LDC but **not Rust**
-   (rust-mos#13). docs/10,12.
+   `lto=true`+`debug=2`. Inline asm works in clang/Zig/LDC **and now Rust too**
+   (`asm!`/`global_asm!`/`naked_asm!` + clobbers behind `#![feature(asm_experimental_arch)]`;
+   rust-mos#13 fixed in the rebuilt toolchain, exp 14). docs/10,12.
 9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
    `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
    and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are

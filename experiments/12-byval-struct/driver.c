@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include "bv.h"
-/* By-value struct ABI on MOS splits into two camps for aggregates <=4 bytes:
- *   {C, C++, Zig}  decompose into scalar registers  (the official MOS C ABI)
- *   {Rust, LDC}    pass indirectly by hidden pointer (non-conformant)
- * so a C caller (which decomposes) feeds Rust/D garbage. The >4-byte path
- * (Big via sret pointer) is agreed by everyone. Portable fix: pass by pointer
- * (see exp 02/08) or keep aggregates >4 bytes. */
+/* By-value struct ABI on MOS for aggregates <=4 bytes:
+ *   {C, C++, Zig, Rust}  decompose into scalar registers  (the official MOS C ABI)
+ *   {LDC/D}              still passes indirectly by hidden pointer (non-conformant)
+ * so a C caller (which decomposes) feeds D garbage. Rust USED to be in the indirect
+ * camp too; the rebuilt rust-mos toolchain's callconv fix (2026-06-04) moved it to
+ * decompose -> this prints "Rust now-matches(!)". The >4-byte path (Big via sret
+ * pointer) is agreed by everyone. Portable fix: pass by pointer or keep aggregates
+ * >4 bytes. */
 int main(void){
     struct Small s = { 40, 2 };  /* sum 42 */
     printf("by-value struct ABI (small<=4B register-decomposed; big>4B sret)\n");

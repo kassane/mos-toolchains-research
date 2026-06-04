@@ -21,9 +21,10 @@ experiment that executes on the `mos-sim` 6502 simulator):
 > `c_int` used to be 32-bit too, now fixed to 16-bit = C's); (2) *struct layout* — Zig's
 > `extern struct` over-aligns (`u32`→4-byte) so structs corrupt unless fields are
 > `align(1)`; (3) *one call-ABI corner* — **by-value structs ≤4 bytes split into
-> two camps**: C/C++/Zig decompose them into registers (the MOS C ABI) while
-> **Rust and D pass them indirectly**, so a by-value small struct corrupts across
-> that boundary (`experiments/12`). **Fix: cross the boundary with fixed-width
+> two camps**: C/C++/Zig **and now Rust** decompose them into registers (the MOS C
+> ABI) while **D still passes them indirectly**, so a by-value small struct corrupts
+> across a D↔other boundary (`experiments/12`; Rust's side was fixed by a 2026-06-04
+> rust-mos callconv rebuild). **Fix: cross the boundary with fixed-width
 > scalars, and pass aggregates by pointer (or keep them >4 bytes).**
 
 See **[Research.md](Research.md)** for the write-up and **[docs/](docs/)** for the
@@ -77,9 +78,9 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 09 | `zero-cost` | Monomorphized generic + higher-order callable: C++ ties C exactly, lambdas inline away |
 | 10 | `tmp-parity` | factorial(10) via constexpr/consteval/CTFE/const-fn folds at `-O0` (lang guarantee); C doesn't |
 | 11 | `dwarf-parity` | Debug info: clang=DWARF5/others=DWARF4, addr_size=4 (deliberate), no CFI (unforceable; designed upstream); `returnaddress` gap both clusters; Rust-dev G_UCMP |
-| 12 | `byval-struct` | By-value struct ABI **hole**: C/C++/Zig decompose ≤4B; Rust/D pass indirect → garbage |
+| 12 | `byval-struct` | By-value struct ABI: C/C++/Zig/Rust decompose ≤4B; **D** still passes indirect → garbage (Rust fixed 2026-06) |
 | 13 | `scalar-callback-abi` | i64 round-trip, signed negate, function-pointer callbacks: shared across all 5 |
-| 14 | `feature-probe` | Capability matrix: inline-asm (rust ✗), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
+| 14 | `feature-probe` | Capability matrix: inline-asm (all 4 — rust via `asm_experimental_arch`), interrupts, atomics(8-bit), multi-CPU, SIMD ✗ |
 | 15 | `std-support` | Stdlib reach: C libc, C++ STL subset, Zig std (richest), Rust `alloc::Vec`, D core.stdc+ldc |
 | 16 | `mos-sim-realworld` | Interactive stdin→stdout filter (libc `getchar` + Zig FFI uppercase) + `$FFF0` cycles |
 | 17 | `zigcc-rust-linker` | `zig cc` as Rust's linker: compiles MOS objs but hits the LLVM-22/23 bitcode cluster wall |
