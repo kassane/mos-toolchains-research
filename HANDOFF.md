@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **25/25 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **26/26 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
@@ -66,7 +66,8 @@ experiments that execute on `mos-sim`.
       multi-CPU 65c02/w65816, SIMD ✗ (exp 14).
 - [x] Stdlib reach + float math (exp 15): C libc / C++ STL subset (no sort) / Zig
       std (richest: mem,sort,fmt,meta,math) / Rust `alloc::Vec` / D core.stdc+ldc.
-      Float `sqrt`: Zig `std.math` & D `core.math` ✓; C `<math.h>` & no_std Rust ✗.
+      Float arith ✓ all; `sqrt`: SDK `sqrtf` stub → Zig/D/C don't link; only Rust `libm`
+      crate runs sqrt + (exported as C `sqrtf`) gives all four parity → 141 (exp 26).
 - [x] Real-world mos-sim I/O (exp 16): interactive stdin filter (libc getchar +
       Zig FFI) + `$FFF0` cycle counting. (Heap malloc is exercised in exp 15.)
 - [x] `zig cc` as Rust linker (exp 17): compiles MOS objs, links native LLVM-23

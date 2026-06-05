@@ -95,9 +95,12 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
    `lto=true`+`debug=2`. Inline asm works in clang/Zig/LDC **and now Rust too**
    (`asm!`/`global_asm!`/`naked_asm!` + clobbers behind `#![feature(asm_experimental_arch)]`;
    rust-mos#13 fixed in the rebuilt toolchain, exp 14). docs/10,12.
-9. **Stdlib reach is uneven (docs/13).** Float math: Zig `std.math` and D
-   `core.math` compute `sqrt` (soft-float); C `<math.h>` has **no** sqrt/sin/pow
-   and `no_std` Rust's `f32::sqrt` is std-only. D `core.stdc.stdio`/`stdlib` are
+9. **Stdlib reach is uneven (docs/13).** Float **arithmetic** (`+-*/`) works everywhere
+   (soft-float libcalls); `sqrt` lowers to a `sqrtf` libcall the SDK libm **lacks**, so Zig
+   `std.math.sqrt`/D `core.math.sqrt`/C compile but **don't link**. The Rust **`libm` crate**
+   runs sqrt natively *and*, exported as C `sqrtf`, gives all four parity (`sqrt(2)·100=141`,
+   exp 26; non-saturating cast `to_int_unchecked`/`@intFromFloat`→`__fixsfsi` dodges the
+   `G_FPTOSI_SAT` gap). D `core.stdc.stdio`/`stdlib` are
    **not ported** ("unsupported system" / undefined `c_long`) — hand-declare
    `extern(C) printf`. Rust gets `alloc::Vec` via a `#[global_allocator]` over
    SDK `malloc`. C++ STL is a tiny subset (no `std::sort`).
@@ -109,7 +112,7 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 ## Repo map
 
 ```
-experiments/01..25   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
+experiments/01..26   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
 docs/00..15          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
                      types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /

@@ -19,22 +19,33 @@ D library-import specifics (probed): `core.stdc.string` ✓, `core.bitop` ✓,
 building-blocks compile but **`Mallocator` fails** (it needs the unported
 `core.stdc.stdlib`). `import std.math` fails (`undefined c_long`).
 
-## Math: who can do float on a CPU with no FPU? (compile-capability)
+## Math: float on a CPU with no FPU — compile vs *run*, and a parity fix (exp 26)
 
-Soft-float, and the answer is surprising — **D and Zig beat C**. This is a *compile*
-capability (does the `sqrt` libcall build?); no experiment runs float `sqrt` — the
-only sqrt actually executed is integer `isqrt` in exp 24:
+Float **arithmetic** (`+ - * /`) works in every frontend — the soft-float libcalls
+(`__mulsf3`/`__divsf3`/`__fixsfsi`) ship in the SDK (exp 26 runs Zig `22/7·1000 = 3142`).
+Float **`sqrt`** is the catch: `@sqrt` / `std.math.sqrt` / `core.math.sqrt` / C all lower
+to a **`sqrtf` libcall the SDK libm doesn't provide**, so they *compile but fail to link*
+(`undefined symbol: sqrtf`). The compile-only picture (Zig/D "have" sqrt) **reverses at
+runtime** — and one crate fixes it for everyone:
 
-| | float math (e.g. `sqrt`) | integer math |
-|--|--|--|
-| C / C++ | ❌ the SDK `<math.h>` declares **no `sqrt`/`sin`/`pow`** | `abs`/`labs` only |
-| **Zig** | ✅ `std.math.sqrt(f32)` **compiles** (own soft-float) | ✅ `std.math.gcd`, … |
-| **D** | ✅ `core.math.sqrt` **compiles** (LDC soft-float libcall) | ✅ |
-| Rust | ❌ `f32::sqrt` is **std-only** (not in `core`; needs a `libm` crate) | ✅ `u16::pow`, … in `core` |
+> **The Rust `libm` crate (pure-Rust software math) is the portable soft-`sqrt`
+> provider.** Rust uses it directly; exported as the C symbols `sqrtf`/`sqrt` it also
+> satisfies C/D/Zig — linking it gives **all four frontends parity** (exp 26):
+> `sqrt(2)·100 → C=141 Zig=141 D=141 Rust=141` on mos-sim.
 
-So on bare MOS, Zig (`std.math`) and D (`core.math`) **compile** software-float
-`sqrt`, while C (`math.h` is essentially empty) and `no_std` Rust cannot without an
-external libm. Integer math is universal (exp 24 runs Zig's integer `isqrt`).
+| | float `sqrt` at runtime (mos-sim) | `+-*/` | integer |
+|--|--|--|--|
+| C / C++ | ❌ alone (`<math.h>` has no `sqrtf`) · ✅ link the `libm` crate | ✅ | `abs`/`labs` |
+| **Zig** | ❌ alone (`std.math.sqrt`→`sqrtf` undefined) · ✅ link the `libm` crate | ✅ | ✅ `std.math.gcd` |
+| **D** | ❌ alone (`core.math.sqrt`→`sqrtf` undefined) · ✅ link the `libm` crate | ✅ | ✅ |
+| **Rust** | ✅ **native** via the `libm` crate (`libm::sqrtf`) | ✅ | ✅ `u16::pow` |
+
+Two caveats (exp 26): a *comptime-constant* `sqrt(2.0)` is **folded** (no libcall) — the
+gap is only for *runtime* inputs; and the `f32`→int cast must be **non-saturating**
+(`to_int_unchecked()` / `@intFromFloat` → `__fixsfsi`), since the saturating cast
+(`as i32`) hits the unlowerable `G_FPTOSI_SAT`/`G_FPTOUI_SAT` backend gap. (Zig's own
+`compiler_rt` *has* a musl `sqrtf`, but it isn't auto-linked here and `-fcompiler-rt` is
+MOS-broken by `cos.zig`; the Rust `libm` crate is the clean shared provider.)
 
 ## Zig `std` does hashing & crypto on a 6502 (exp 24)
 

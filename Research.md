@@ -28,8 +28,9 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
 - **Stdlib reach is uneven, and float math inverts the usual order** (docs/13):
   Zig `std` is richest (mem/sort/fmt/meta/math), Rust adds `alloc::Vec` via a
   global allocator, C has full libc but the C++ STL is a stub (no `std::sort`),
-  and **only Zig (`std.math`) and D (`core.math`) compute `sqrt` on MOS** — C's
-  `<math.h>` and `no_std` Rust can't. mos-sim runs real interactive stdin I/O
+  and float `sqrt` runs **only via Rust's `libm` crate** — the SDK's `sqrtf` is a stub
+  (Zig/D `sqrt` compile but don't link), and that crate (exported as C `sqrtf`) gives all
+  four parity (exp 26). mos-sim runs real interactive stdin I/O
   (exp 16).
 - **Debug info works; CFI doesn't — yet.** Every frontend emits inspectable DWARF
   (clang v5, others v4; a deliberate `addr_size=4`), and the line tables are
@@ -116,8 +117,9 @@ docs/06). A caution: "same backend" guarantees *interop*, not *parity*.
 **Recognised kernels (exp 24)** sharpen this: the BYTE sieve, recursive fib, and
 CRC-16 in all five languages give identical canonical results, but the per-kernel
 size/speed ranking *inverts* (Zig smallest code yet slowest on sieve/fib; D's
-crc16 largest but fastest) — and only Zig can pull the same CRC, a real
-**SHA-256** (`std.crypto`), and `sqrt` straight from its stdlib on a 6502. The
+crc16 largest but fastest) — and only Zig pulls the same CRC and a real
+**SHA-256** (`std.crypto`) straight from its stdlib on a 6502 (float `sqrt`, though,
+needs the Rust `libm` crate — the SDK's `sqrtf` is a stub; exp 26). The
 numbers track the community C-Bench-64 suite (llvm-mos beats cc65, 2nd to Oscar64),
 but the axis here is five *languages* on one backend, not six *compilers*.
 
