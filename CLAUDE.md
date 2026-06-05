@@ -111,9 +111,10 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 ```
 experiments/01..25   each: sources + run.sh (ends by running on mos-sim); build/ gitignored
 scripts/             setup.sh (download toolchains) env.sh run-all.sh
-docs/00..14          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
+docs/00..15          support matrix / toolchains / ABI / ffi / ir-mixing(+zig-cc-linker) /
                      types+struct / codegen / issues / zero-cost / tmp-parity / dwarf /
-                     byval+scalar / features / stdlib+math(+mmio-hal) / embed+reflection  (safety→12, raii→08)
+                     byval+scalar / features / stdlib+math(+mmio-hal) / embed+reflection /
+                     65816+snes  (safety→12, raii→08)
 Research.md HANDOFF.md  headline write-up / status
 ```
 
