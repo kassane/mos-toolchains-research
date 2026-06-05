@@ -30,10 +30,10 @@ echo "### link ALL languages into one mos-sim binary ###"
 "$SDKBIN/mos-sim-clang" -Os \
     "$B/driver.o" "$B/lib_c.o" "$B/lib_cpp.o" "$B/lib_d.o" "$B/lib_zig.o" "$B/libffi_rs.a" \
     -o "$B/ffi_matrix.elf"
-echo "  linked: $(file -b "$B/ffi_matrix.elf" | cut -d, -f1)  size=$($SIZE "$B/ffi_matrix.elf" 2>/dev/null | tail -1 | awk '{print $4}') bytes"
+echo "  linked: $(file -b "$B/ffi_matrix.elf" | cut -d, -f1)  size=$("$SIZE" "$B/ffi_matrix.elf" 2>/dev/null | tail -1 | awk '{print $4}') bytes"
 
 echo "### undefined symbols (must be none) ###"
-UND="$($NM "$B/ffi_matrix.elf" 2>/dev/null | grep -c ' U ' || true)"
+UND="$("$NM" "$B/ffi_matrix.elf" 2>/dev/null | grep -c ' U ' || true)"
 echo "  undefined count: $UND"
 
 echo "### RUN on mos-sim ###"

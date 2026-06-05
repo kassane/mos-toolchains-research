@@ -33,14 +33,14 @@ done
 
 echo "### 4a. link as separate objects (NO cross-language inlining) ###"
 "$CLANG" -Os -fno-lto "$B/main.o" "$B/c.o" "$B/d.o" "$B/zig.o" "$B/rs.o" -o "$B/mix_nolto.elf"
-NOLTO_OUT="$("$SIM" "$B/mix_nolto.elf")"; NOLTO_RC=$?
+set +e; NOLTO_OUT="$("$SIM" "$B/mix_nolto.elf")"; NOLTO_RC=$?; set -e
 NOLTO_CYC="$("$SIM" --cycles "$B/mix_nolto.elf" 2>&1 >/dev/null | tr -dc '0-9')"
 echo "  $NOLTO_OUT  (rc=$NOLTO_RC, cycles=$NOLTO_CYC)"
 
 echo "### 4b. cross-language LTO: feed all IR to the linker, it merges+inlines ###"
 # main.o is LTO bitcode (sim platform defaults to LTO); the 4 step IRs join it.
 "$CLANG" -Oz -flto "$B/main.o" -x ir "$B/c.ll" "$B/d.ll" "$B/zig.ll" "$B/rs.ll" -o "$B/mix_lto.elf"
-LTO_OUT="$("$SIM" "$B/mix_lto.elf")"; LTO_RC=$?
+set +e; LTO_OUT="$("$SIM" "$B/mix_lto.elf")"; LTO_RC=$?; set -e
 LTO_CYC="$("$SIM" --cycles "$B/mix_lto.elf" 2>&1 >/dev/null | tr -dc '0-9')"
 echo "  $LTO_OUT  (rc=$LTO_RC, cycles=$LTO_CYC)"
 

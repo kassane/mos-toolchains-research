@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Compile-time file embedding across 5 frontends: C23 #embed, C++ #embed,
 # D import("file") (-J), Zig @embedFile, Rust include_bytes!. Each embeds the
-# SAME payload.bin at compile time and returns its byte-sum; all must equal 528.
+# SAME payload.bin at compile time and returns its byte-sum; all must agree with
+# the actual sum (computed below and passed as -DEXPECT).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../../scripts/env.sh"

@@ -3,5 +3,5 @@ module sizes_d;
 // regardless of target -- so they do NOT match C's mos `int`(16)/`long`(32).
 extern(C) ubyte d_int_bytes()   { return int.sizeof; }     // == 4
 extern(C) ubyte d_long_bytes()  { return long.sizeof; }    // == 8
-extern(C) ubyte d_sizet_bytes() { return size_t.sizeof; }  // LDC: 4 (pointer is 2!)
+extern(C) ubyte d_sizet_bytes() { return size_t.sizeof; }  // LDC 1.42: 2 (fixed to pointer width)
 extern(C) ubyte d_ptr_bytes()   { return (void*).sizeof; } // == 2

@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 /* Each language embeds the SAME payload.bin at COMPILE TIME (no runtime file I/O)
- * and returns the byte-sum. All must equal 528 (bytes 1..32). */
+ * and returns the byte-sum (mod 2^16). run.sh passes the actual sum as -DEXPECT,
+ * so this stays correct if payload.bin changes; all six methods must agree. */
 uint16_t c_sum(void);    /* C23  #embed              */
 uint16_t cpp_sum(void);  /* C++  #embed (Clang ext)  */
 uint16_t rs_sum(void);   /* Rust include_bytes!      */
