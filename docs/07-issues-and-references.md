@@ -62,11 +62,15 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 ## kassane/dlang-mos-hello-world
 
 - **`#1` "Struct size mismatch for mos6502"** — LDC emitted struct length/`size_t`
-  as `i32` while Zig used `i16`. Marked `wontfix` then; **resolved by LDC 1.42**
-  (exp 03 shows D `size_t` == 2 == pointer). Root cause was the historical
-  `size_t ≥ 32-bit` frontend rule (ldc#4466). The same repo demonstrates the D→C
-  build pattern we mirror: `-betterC`, `-mtriple=mos`, link via `-gcc=mos-*-clang
-  -linker=lld`, FFI through ImportC.
+  as `i32` while Zig used `i16`. Marked `wontfix` then; **resolved by LDC 1.42** (exp 03
+  shows D `size_t` == 2 == pointer; root cause was the historical `size_t ≥ 32-bit`
+  frontend rule, ldc#4466). The **rebuilt LDC (`d5610c25…`) also fixes ImportC's `int`
+  width on MOS**: `import`ed C now sees a **16-bit `int`** (`sizeof(int)==2`,
+  `struct{int}==2`), matching the real MOS C ABI — closing #1 at the ImportC layer too
+  (exp 27, verified on mos-sim). ImportC must be pointed at a MOS C compiler
+  (`-gcc=$SDKBIN/mos-sim-clang`, `-P-I…` for headers); the default host `/usr/bin/clang`
+  rejects `-mtriple=mos`. The same repo demonstrates the D→C build pattern we mirror:
+  `-betterC`, `-mtriple=mos`, link via `-gcc=mos-*-clang -linker=lld`, FFI through ImportC.
 
 ## zig-mos (kassane/zig-mos-bootstrap)
 
@@ -103,14 +107,17 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - Toolchain tarballs are pinned (SHA256) in `scripts/setup.sh`; the download verifies
   each against its pin and aborts on mismatch. Current pins (verified 2026-06):
   - zig  `8f45d896…` (rolling `0.17.0-dev`)
-  - ldc2 `40c2f8c8…` (`0.1.0`)
+  - ldc2 `d5610c25…` (`0.1.0`)
   - rust `26f8e362…` (`0.1.0`)
 
   These forks move fast — **all three were rebuilt again** this round. **rust-mos**
   moved `3c7c1407…` → `26f8e362…`, but the rustc *version* is unchanged (`1.98.0-dev`;
   the binary reports no commit hash), so the fixes ride in the bundled target specs/std:
   `c_int`=16, the G_UCMP `lto` workaround, and the `asm!`/callconv #13 fix all still
-  hold, and the newest adds `clobber_abi("C")`. **Zig's rolling `0.17.0-dev`** keeps drifting too: this build
+  hold, and the newest adds `clobber_abi("C")`. **LDC** was rebuilt again
+  (`40c2f8c8…` → `d5610c25…`) — it fixes ImportC's MOS `int` width (now 16-bit;
+  resolves dlang-mos-hello-world#1 at the ImportC layer, exp 27) and keeps the
+  by-value-struct callconv fix. **Zig's rolling `0.17.0-dev`** keeps drifting too: this build
   ships the full asm-clobber register file (was: none) on top of the earlier
   `c_int`→16-bit and `@typeInfo` reshapes. Pin a build for reproducibility — when a
   rolling tag rolls, the SHA check trips and the pin must be refreshed.

@@ -7,7 +7,7 @@ experiments that execute on `mos-sim`.
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
       1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
-- [x] `scripts/env.sh` + `scripts/run-all.sh`; **26/26 experiments pass** (exit 0).
+- [x] `scripts/env.sh` + `scripts/run-all.sh`; **27/27 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
