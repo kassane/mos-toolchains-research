@@ -36,7 +36,7 @@ evidence. Toolchain quirks worth knowing up front are in **[CLAUDE.md](CLAUDE.md
 | C / C++ | LLVM-MOS SDK | clang **23.0.0git** | **23** | `--target=mos -mcpu=mos6502` |
 | Rust | Rust-MOS | rustc **1.98.0-dev** | **23** | `--target mos-unknown-none -Ctarget-cpu=mos6502` |
 | Zig | Zig-MOS | **0.17.0-mos-dev** | **22** | `-target mos-freestanding -mcpu mos6502` |
-| D | LDC2-MOS | LDC **1.42.0** (DMD 2.112.1) | **22** | `--mtriple=mos -mcpu=mos6502 -mattr=…` |
+| D | LDC2-MOS | LDC **1.42.0** (DMD 2.112.1) | **23** | `--mtriple=mos -mcpu=mos6502 -mattr=…` |
 
 All four emit the **byte-identical** LLVM data layout, which is the whole basis
 for interop:
