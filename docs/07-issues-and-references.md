@@ -48,7 +48,7 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
 - `#2520` 16-bit bounds-check `ICmp` type-mismatch (MSP430) — same 16-bit-target
   family. `#2194` (merged) original MSP430 / 16-bit support that 8/16-bit targets
   build on.
-- **By-value-struct callconv FIXED in the rebuilt LDC** (`40c2f8c8…`): ≤4-byte
+- **By-value-struct callconv FIXED in the rebuilt LDC**: ≤4-byte
   aggregates now lower as a first-class aggregate (`@d_small(%Small)`, **no `byval`**)
   and the backend decomposes them to registers — matching the MOS C ABI. This closes
   the last FFI call-ABI hole (D was the final indirect holdout after Rust; exp 12,
@@ -110,11 +110,11 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
   - ldc2 `d5610c25…` (`0.1.0`)
   - rust `26f8e362…` (`0.1.0`)
 
-  These forks move fast — **all three were rebuilt again** this round. **rust-mos**
-  moved `3c7c1407…` → `26f8e362…`, but the rustc *version* is unchanged (`1.98.0-dev`;
-  the binary reports no commit hash), so the fixes ride in the bundled target specs/std:
-  `c_int`=16, the G_UCMP `lto` workaround, and the `asm!`/callconv #13 fix all still
-  hold, and the newest adds `clobber_abi("C")`. **LDC** was rebuilt again
+  These forks move fast — each has been rebuilt since the initial pin, so the SHAs above
+  will drift again. **rust-mos** moved `3c7c1407…` → `26f8e362…`, but the rustc *version*
+  is unchanged (`1.98.0-dev`; the binary reports no commit hash), so the fixes ride in the
+  bundled target specs/std: `c_int`=16, the G_UCMP `lto` workaround, and the `asm!`/callconv
+  #13 fix all hold, and the latest adds `clobber_abi("C")`. **LDC** was rebuilt most recently
   (`40c2f8c8…` → `d5610c25…`) — it fixes ImportC's MOS `int` width (now 16-bit;
   resolves dlang-mos-hello-world#1 at the ImportC layer, exp 27) and keeps the
   by-value-struct callconv fix. **Zig's rolling `0.17.0-dev`** keeps drifting too: this build
