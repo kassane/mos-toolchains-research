@@ -22,7 +22,7 @@ commit them** (`.gitignore` guards `tools/`, `build/`, `target/`, `*.tar.xz`).
 | var | points at |
 |-----|-----------|
 | `$ZIG` | Zig **0.17.0-mos-dev** (bundled clang/LLVM **22**); also `zig cc`/`zig c++` |
-| `$LDC` | **LDC 1.42.0** (DMD 2.112.1, LLVM **22**). D; `-betterC` only on MOS |
+| `$LDC` | **LDC 1.42.0** (DMD 2.112.1, LLVM **23**). D; `-betterC` only on MOS |
 | `$SDKBIN` | llvm-mos-sdk **v23.0.1** bin (clang **23**, `mos-*-clang` drivers, `ld.lld`, `mos-sim`) |
 | `$MOSCLANG`/`$MOSCXX` | raw `--target=mos` clang/clang++ (LLVM 23) |
 | `$RUSTC`/`$CARGO` | rust-mos **1.98.0-dev** (LLVM **23**), target `mos-unknown-none` |
@@ -45,7 +45,7 @@ Disassemble objects with `llvm-objdump -d --mcpu=mos6502` (SDK ships objdump but
 
 ## Non-obvious gotchas (already solved — don't relearn the hard way)
 
-1. **Two LLVM clusters.** SDK-clang + rust-mos are LLVM **23**; Zig + LDC are
+1. **Two LLVM clusters.** SDK-clang + rust-mos + LDC are LLVM **23**; **Zig** alone is
    LLVM **22**. ELF objects interlink across both (stable e_machine `0x1966` =
    6502). For *bitcode/LTO*, the LLVM-23 toolchain reads LLVM-22 textual IR
    (upgrades on parse, docs/04); the reverse (Zig's LLVM-22 lld on SDK LLVM-23

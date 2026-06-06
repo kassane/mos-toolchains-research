@@ -20,8 +20,8 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
   32-bit on older builds); Zig over-aligns struct fields so `extern struct`
   corrupts by-pointer structs (exp 03, 05, 07, 08). Pass fixed-width scalars or
   byte-aligned structs.
-- **IRs mix across LLVM versions.** The LLVM-23 toolchain (SDK, Rust) consumes
-  LLVM-22 textual IR from D and Zig and links/LTOs it into a running binary
+- **IRs mix across LLVM versions.** The LLVM-23 toolchain (SDK, Rust, D) consumes
+  Zig's LLVM-22 textual IR and links/LTOs it into a running binary
   (exp 04). Two version clusters, one for bitcode, but ELF is universal —
   `zig cc` can't be the Rust linker because it trips that wall on the SDK's
   bitcode libc (exp 17).
@@ -44,7 +44,7 @@ which **executes on the `mos-sim` 6502 simulator** (exit code = pass/fail).
 A trivial `add(i32,i32)` compiled by each frontend produces the same
 `target datalayout`. That single fact is why FFI is even possible: identical
 pointer width, integer/aggregate alignment and endianness across clang 23,
-rustc 1.98 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 22). The MOS C
+rustc 1.98 (LLVM 23), Zig 0.17 (LLVM 22) and LDC 1.42 (LLVM 23). The MOS C
 calling convention lives in the backend (zero-page "imaginary registers"
 `__rc0..31` / `__rs0..15`; args in A/X then RC2.., pointers in RS1.., aggregates
 >4 bytes by hidden pointer), so every frontend that lowers to this backend
@@ -64,7 +64,7 @@ zig_shl16 = 512    [PASS]   Zig -> calls C
 == 0 failures ==   mos-sim exit 0, 0 undefined symbols
 ```
 
-The link mixes **LLVM-22 native ELF** (D, Zig) with **LLVM-23 LTO bitcode**
+The link mixes **native ELF** (D, Zig) with **LLVM-23 LTO bitcode**
 (C, C++, Rust — the SDK platforms default to LTO, `-mlto-zp=224`) in one
 `mos-sim-clang` invocation. The output ELF `e_machine` is `0x1966` = 6502.
 
@@ -100,24 +100,24 @@ into it; clang `__attribute__((address_space(1)))` lowers to `ptr addrspace(1)`.
 
 The SDK ships no `llvm-link`/`opt`, so the linker's LTO is the merge engine — the
 real llvm-mos path. A 4-language pipeline (`zig(d(rust(c(x))))`) emits textual
-`.ll` from each frontend; **LLVM-23 `clang -x ir` parses the LLVM-22 D and Zig IR
+`.ll` from each frontend; **LLVM-23 `clang -x ir` parses Zig's LLVM-22 IR
 (upgrades on load)** and both a separate-objects link and a cross-language `-flto`
 link produce a binary that runs (`pipeline(7)=255`). So: two LLVM **clusters**
-(23 = SDK+Rust, 22 = Zig+D) for bitcode purposes, but the newer toolchain reads
+(23 = SDK+Rust+D, 22 = Zig alone) for bitcode purposes, but the newer toolchain reads
 the older IR and ELF objects link universally (docs/04).
 
 ## 6. Same source, different code (exp 05)
 
 A shared backend does **not** mean identical codegen — the frontend's IR shape
 and default opt pipeline dominate. One LCG loop, five languages, identical result
-`14836`, but the code isn't: instruction counts run 105 (C/C++, byte-identical)
-down to 47 (Zig), cycles 191272 down to 111055 (Zig/D leanest; full table in
+`14836`, but the code isn't: instruction counts run 105 (C/C++ and D, byte-for-byte
+the heaviest) down to 47 (Zig), cycles 191272 down to 111055 (Zig leanest; full table in
 docs/06). A caution: "same backend" guarantees *interop*, not *parity*.
 
 **Recognised kernels (exp 24)** sharpen this: the BYTE sieve, recursive fib, and
 CRC-16 in all five languages give identical canonical results, but the per-kernel
 size/speed ranking *inverts* (Zig smallest code yet slowest on sieve/fib; D's
-crc16 largest but fastest) — and only Zig pulls the same CRC and a real
+crc16 both smallest and fastest, ~3.9× Zig) — and only Zig pulls the same CRC and a real
 **SHA-256** (`std.crypto`) straight from its stdlib on a 6502 (float `sqrt`, though,
 needs the Rust `libm` crate — the SDK's `sqrtf` is a stub; exp 26). The
 numbers track the community C-Bench-64 suite (llvm-mos beats cc65, 2nd to Oscar64),

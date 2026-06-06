@@ -6,7 +6,7 @@ experiments that execute on `mos-sim`.
 ## Done
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
-      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 22).
+      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 23).
 - [x] `scripts/env.sh` + `scripts/run-all.sh`; **27/27 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
@@ -35,7 +35,7 @@ experiments that execute on `mos-sim`.
 - [x] Benchmark suite (exp 24): BYTE sieve / recursive fib / CRC-16 in all 5
       (canonical 1899 / 46368 / 0x7E55), per-kernel cycles + size -- codegen spread
       is real and size/speed **inverts** (Zig smallest code, often slowest; D's
-      crc16 largest but fastest). Aligns with C-Bench-64 (llvm-mos > cc65, 2nd to
+      crc16 smallest and fastest, ~3.9x Zig). Aligns with C-Bench-64 (llvm-mos > cc65, 2nd to
       Oscar64). + Zig `std.hash.crc` / `std.crypto` SHA-256 / `std.math` run on a
       6502 (only Zig reaches them); 6502-vs-65C02 measured (not a uniform win).
 - [x] Real-world asm idioms (exp 25): the llvm-mos-sdk iNES **global-asm linker-symbol**

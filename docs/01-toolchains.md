@@ -62,10 +62,10 @@ $ZIG build-obj --show-builtin -target mos-freestanding -mcpu mos6502   # resolve
 `zig cc` defaults to UBSan in Debug — use `-fno-sanitize=undefined`/`-nostdlib`
 for freestanding C (not used here; 6502 C goes through the SDK clang 23).
 
-## D — LDC 1.42.0 (DMD 2.112.1, LLVM 22)
+## D — LDC 1.42.0 (DMD 2.112.1, LLVM 23)
 
 ```
-LDC - the LLVM D compiler (1.42.0): based on DMD v2.112.1 and LLVM 22.0.0
+LDC - the LLVM D compiler (1.42.0): based on DMD v2.112.1 and LLVM 23.0.0
 ```
 
 `-betterC` only on MOS (no druntime/Phobos). LDC predefines `version(MOS6502)`.

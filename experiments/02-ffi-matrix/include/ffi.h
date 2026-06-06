@@ -13,7 +13,7 @@ extern "C" {
 uint8_t  c_add8   (uint8_t  a, uint8_t  b);  /* C    (SDK clang, LLVM 23) */
 uint16_t cpp_mul16(uint16_t a, uint16_t b);  /* C++  (SDK clang++,LLVM 23)*/
 uint16_t rs_sub16 (uint16_t a, uint16_t b);  /* Rust (rust-mos,  LLVM 23) */
-uint16_t d_xor16  (uint16_t a, uint16_t b);  /* D    (LDC 1.42,  LLVM 22) */
+uint16_t d_xor16  (uint16_t a, uint16_t b);  /* D    (LDC 1.42,  LLVM 23) */
 uint16_t zig_shl16(uint16_t a, uint8_t  n);  /* Zig  (0.17-mos,  LLVM 22) */
 
 /* Transitive cross-language calls (prove non-C languages call each other):

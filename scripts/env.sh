@@ -5,7 +5,7 @@ export TOOLS=/home/user/tools
 
 # Zig 0.17.0-mos-dev (bundled LLVM 22) — also `zig cc` / `zig c++`
 export ZIG="$TOOLS/zig/zig-mos-x86_64-linux-musl-baseline/zig"
-# LDC 1.42.0 (LLVM 22.0.0) — D; use -betterC for bare-metal MOS
+# LDC 1.42.0 (LLVM 23.0.0) — D; use -betterC for bare-metal MOS
 export LDC="$TOOLS/ldc/bin/ldc2"
 # llvm-mos-sdk v23.0.1 (LLVM 23) — mos-*-clang drivers, clang, ld.lld, llvm-*
 export SDK="$TOOLS/sdk/llvm-mos"

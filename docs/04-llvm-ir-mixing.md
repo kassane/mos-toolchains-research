@@ -5,8 +5,8 @@ Two LLVM versions are in play:
 
 | cluster | toolchains | LLVM |
 |---|---|---|
-| **23** | SDK clang/clang++, rust-mos, `ld.lld` | 23.0.0git |
-| **22** | Zig 0.17-mos, LDC 1.42 | 22.0.0 |
+| **23** | SDK clang/clang++, rust-mos, LDC 1.42, `ld.lld` | 23.0.0git |
+| **22** | Zig 0.17-mos (sole) | 22.0.0 |
 
 ## The merge engine is the linker
 
@@ -21,7 +21,7 @@ A 4-language pipeline `zig_step(d_step(rs_step(c_step(x))))`, one transform per
 language, each emitted as textual `.ll`:
 
 - All four `.ll` carry the **same datalayout** (`unique = 1`).
-- `mos-sim-clang -x ir` (LLVM 23) **parses the LLVM-22 D and Zig IR** — only a
+- `mos-sim-clang -x ir` (LLVM 23) **parses Zig's LLVM-22 IR** (C/D/Rust are 23) — only a
   `-Woverride-module` triple warning — and emits objects.
 - Both a separate-objects link (`-fno-lto`) and a cross-language **`-flto`** link
   produce a binary that runs: `pipeline(7) = 255`, exit 0.

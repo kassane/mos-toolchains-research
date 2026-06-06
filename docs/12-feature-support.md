@@ -145,9 +145,10 @@ Escape analysis: D `@safe -preview=dip1000` and Rust's borrow checker both rejec
   ReleaseSafe bounds *and* overflow build and trap. (`-ODebug` still fails on
   `@llvm.returnaddress`; the SDK examples also note a Debug **SSP** lowering
   failure — use a release mode.)
-  - **The default-handler crash is Zig-codegen-specific, not all-LLVM-22:** LDC
-    is *also* LLVM 22 but never hits it — its `-boundscheck=on` index lowers to
-    `cmp`/`bcs`/`jsr __assert` and builds clean at `-O0`…`-O3`/`-Oz`.
+  - **The default-handler crash is Zig-codegen-specific, not inherent to LLVM-22:**
+    LDC's `-boundscheck=on` index lowers to `cmp`/`bcs`/`jsr __assert` and builds clean
+    at `-O0`…`-O3`/`-Oz` — and it did so even back when LDC was on LLVM 22 (it has
+    since moved to LLVM 23), so the crash is Zig's codegen, not the LLVM version.
 
 So **all three of Rust, Zig (with `mos_panic`), and D `@safe` give real safety on
 the 6502**: Rust = compile-time + runtime (bounds+overflow); Zig = runtime

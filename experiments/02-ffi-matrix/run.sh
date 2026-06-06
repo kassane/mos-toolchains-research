@@ -12,7 +12,7 @@ echo "### compile each language -> native .o (mos-$CPU) ###"
 "$SDKBIN/mos-sim-clang"   -mcpu=$CPU -Os -c "$HERE/lib_c.c"   -I"$HERE/include" -o "$B/lib_c.o"
 # C++ (SDK mos-sim-clang++, LLVM 23) -- no exceptions/rtti
 "$SDKBIN/mos-sim-clang++" -mcpu=$CPU -Os -fno-exceptions -fno-rtti -c "$HERE/lib_cpp.cpp" -I"$HERE/include" -o "$B/lib_cpp.o"
-# D  (LDC 1.42, LLVM 22) -- betterC, native object (no -flto => real .o)
+# D  (LDC 1.42, LLVM 23) -- betterC, native object (no -flto => real .o)
 "$LDC" -betterC $LDC_PE -Oz -mtriple=mos -mcpu=$CPU -mattr=$MOS_MATTR -c "$HERE/lib_d.d" -of="$B/lib_d.o"
 # Zig (0.17-mos, LLVM 22) -- build-obj => native .o
 "$ZIG" build-obj -target mos-freestanding -mcpu $CPU -OReleaseSmall -femit-bin="$B/lib_zig.o" "$HERE/lib_zig.zig"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Cross-language LLVM IR mixing on MOS. Two of the four frontends emit LLVM-22
-# IR (D, Zig); two emit LLVM-23 (C, Rust). We (1) show all four agree on
+# Cross-language LLVM IR mixing on MOS. One of the four frontends emits LLVM-22
+# IR (Zig); three emit LLVM-23 (C, D, Rust). We (1) show all four agree on
 # datalayout, (2) prove the LLVM-23 toolchain consumes the LLVM-22 *textual* IR
 # (clang -x ir upgrades on parse), and (3) do cross-language LTO via the linker
 # and compare cycle counts against the non-LTO build. The SDK ships no
@@ -24,7 +24,7 @@ printf "  Rust target: %s\n" "$(grep -m1 'target triple' "$B/rs.ll" | cut -d'"' 
 printf "  unique datalayouts across c/d/zig/rs: %s (1 = all agree)\n" \
        "$(grep -h '^target datalayout' "$B"/c.ll "$B"/d.ll "$B"/zig.ll "$B"/rs.ll | sort -u | wc -l)"
 
-echo "### 3. LLVM-23 clang consumes each IR (incl. LLVM-22 D & Zig) -> native .o ###"
+echo "### 3. LLVM-23 clang consumes each IR (incl. LLVM-22 Zig) -> native .o ###"
 for f in c d zig rs; do
   "$CLANG" -mcpu=$CPU -Oz -x ir "$B/$f.ll" -c -o "$B/$f.o"
   printf "  %-5s -> %s\n" "$f.ll" "$(file -b "$B/$f.o" | cut -d, -f1)"

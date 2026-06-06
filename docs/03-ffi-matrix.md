@@ -11,7 +11,7 @@ The headline experiment: one function per language, all linked into a single
 uint8_t  c_add8   (uint8_t  a, uint8_t  b);  // C    (clang 23)
 uint16_t cpp_mul16(uint16_t a, uint16_t b);  // C++  (clang++ 23)
 uint16_t rs_sub16 (uint16_t a, uint16_t b);  // Rust (rust-mos 23)
-uint16_t d_xor16  (uint16_t a, uint16_t b);  // D    (LDC 22)  -> calls rs_sub16
+uint16_t d_xor16  (uint16_t a, uint16_t b);  // D    (LDC 23)  -> calls rs_sub16
 uint16_t zig_shl16(uint16_t a, uint8_t  n);  // Zig  (0.17 22) -> calls c_add8
 ```
 
@@ -26,11 +26,11 @@ Each language → object, then one `mos-sim-clang` link:
 
 ```
 driver.o lib_c.o lib_cpp.o   -> LLVM-23 LTO bitcode (SDK platform defaults to LTO)
-lib_d.o  lib_zig.o           -> LLVM-22 native ELF
-libffi_rs.a                  -> LLVM-23 native objects
+lib_zig.o                    -> LLVM-22 native ELF
+lib_d.o  libffi_rs.a         -> LLVM-23 native objects
 ```
 
-So the single link **mixes LLVM-22 native ELF with LLVM-23 bitcode** — and it
+So the single link **mixes LLVM-22 native ELF (Zig) with LLVM-23 bitcode + ELF** — and it
 works, because the SDK's LLVM-23 `ld.lld` LTO-compiles the bitcode and links the
 ELF objects alongside (ELF `e_machine 0x1966` = 6502).
 

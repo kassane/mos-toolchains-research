@@ -9,12 +9,12 @@ counter:
 | | C | C++ | Rust | D | Zig |
 |--|--:|--:|--:|--:|--:|
 | result | 14836 | 14836 | 14836 | 14836 | 14836 |
-| instructions | 105 | 105 | 87 | 54 | 47 |
-| cycles | 191272 | 191272 | 147225 | 119446 | 111055 |
+| instructions | 105 | 105 | 87 | 105 | 47 |
+| cycles | 191272 | 191272 | 147225 | 191272 | 111055 |
 
 All five compute the **identical** value, so the semantics are shared. But the
-**code is not**: C/C++ (same clang frontend) are byte-identical to each other and
-heaviest here; D and Zig are leanest. A shared backend guarantees *interop*, not
+**code is not**: C/C++ (same clang frontend) are byte-identical to each other, and
+D ties them at 105 instructions — heaviest here; only Zig is leanest (47). A shared backend guarantees *interop*, not
 *parity* — the frontend's IR shape and default opt level (`-Os`/`-Oz`/
 `ReleaseSmall`/`opt-level=s`) drive the difference. Per-function 6502 disassembly
 is saved in `experiments/05-codegen-cycles/build/disasm-*.txt`.
@@ -56,16 +56,18 @@ per-function bytes) and **cycles** (mos-sim `$FFF0`, bracketing only the call):
 
 | bytes | C | C++ | Rust | D | Zig | | cycles | C | C++ | Rust | D | Zig |
 |--|--:|--:|--:|--:|--:|--|--|--:|--:|--:|--:|--:|
-| sieve | 264 | 264 | 267 | 238 | **229** | | sieve | **2.15M** | 2.15M | 2.36M | 2.44M | 2.47M |
-| fib | 146 | 146 | 146 | 117 | **113** | | fib | **13.69M** | 13.69M | 13.72M | 14.03M | 14.10M |
-| crc16 | 111 | 111 | 136 | 218 | **96** | | crc16 | 78K | 76K | 100K | **61K** | 109K |
+| sieve | 264 | 264 | 267 | 264 | **229** | | sieve | **2.15M** | 2.15M | 2.34M | 2.15M | 2.47M |
+| fib | 146 | 146 | 146 | 156 | **113** | | fib | 13.69M | 13.69M | 13.69M | **13.68M** | 14.03M |
+| crc16 | 111 | 111 | 136 | 102 | **96** | | crc16 | 78K | 76K | 100K | **28K** | 109K |
 
 Same backend, same result — but the spread is real and the **size/speed ranking
 inverts**: Zig emits the smallest code on every kernel yet is slowest on
-sieve/fib; D's crc16 is the *largest* (218 B) but *fastest* (61 K, ~1.8× Zig). C
-and C++ are byte-identical (same clang). The **frontend's IR shape** (loop idiom,
-index arithmetic) drives this, not the backend — the same "trade size for speed"
-llvm-mos is known for, here visible *across frontends*.
+sieve/fib; D matches C/C++ on sieve/fib size and speed, and is the clear crc16
+winner on **both** axes — smallest (102 B, below C's 111) *and* fastest (≈28 K,
+~3.9× faster than Zig's 109 K). C and C++ are byte-identical (same clang). The
+**frontend's IR shape** (loop idiom, index arithmetic) drives this, not the
+backend — the same "trade size for speed" llvm-mos is known for, here visible
+*across frontends*.
 
 **Per-function size, not whole-image — on purpose.** The community suite
 **C-Bench-64** (cc65/llvm-mos/Oscar64/vbcc/SDCC/Calypsi on a real C64) reports

@@ -47,7 +47,7 @@ e-m:e-p:16:8-p1:8:8-i16:8-i32:8-i64:8-f32:8-f64:8-a:8-Fi8-n8
 
 (little-endian; 16-bit pointers; **address space 1 = 8-bit zero-page pointers**;
 every scalar byte-aligned; 8-bit native int.) Two LLVM *versions* are in play —
-SDK+Rust on 23, Zig+D on 22 — so they form two **clusters** for bitcode/LTO
+SDK+Rust+D on 23, Zig on 22 — so they form two **clusters** for bitcode/LTO
 purposes (docs/04), but ELF objects link freely across both.
 
 ## Quickstart
@@ -69,7 +69,7 @@ binary on `mos-sim` (exit code = its own pass/fail). The toolchains live
 | 01 | `ir-datalayout` | All 4 frontends emit one identical datalayout; `int`→`i16`(C) vs `i32`(D/Rust/Zig) |
 | 02 | `ffi-matrix` | C+C+++Rust+D+Zig in **one** 6502 binary, run on sim, incl. D→Rust & Zig→C cross-calls |
 | 03 | `int-width` | Runtime `sizeof` table: the `int`/`long`/`c_int` divergences (and what agrees) |
-| 04 | `llvm-ir-mix` | LLVM-23 `clang`/`lld` merges LLVM-22 (D, Zig) textual IR; LTO across languages |
+| 04 | `llvm-ir-mix` | LLVM-23 `clang`/`lld` merges Zig's LLVM-22 textual IR (C/D/Rust are 23); LTO across languages |
 | 05 | `codegen-cycles` | Same loop, 5 languages: identical result, different instruction count & cycles |
 | 06 | `cpu-features` | `ldc -mcpu` leaves features empty (ldc#4919 class); `-mattr` is benign for base mos6502 |
 | 07 | `comptime-abi` | Compile-time ABI assertions; C/D/Rust byte-align vs Zig natural-align |

@@ -22,7 +22,7 @@ classes/GC), Rust `no_std` (`core` generics + `Fn` bound, no `alloc`), C++
               sum16   apply
 C (baseline)   39      7
 C++            39      7      <- template sum byte-identical to C; lambda inlined
-D              34      5
+D              42      7
 Rust           55      7
 ```
 
@@ -30,11 +30,12 @@ Rust           55      7
 
 - **C++ `sum<u16>` is byte-identical to the hand-written C loop** (39 = 39): the
   template monomorphizes to exactly the C code. Textbook zero-cost.
-- **The higher-order call collapses to nothing**: `apply` is 5–7 instructions
-  everywhere — the lambda/closure is fully inlined; there is **no indirect call,
+- **The higher-order call collapses to nothing**: `apply` is **7 instructions
+  everywhere** — the lambda/closure is fully inlined; there is **no indirect call,
   no closure object** in the output. Static dispatch on the 6502 is free.
-- **D is leanest here** (34/5) — `-betterC` templates + `=>` lambda inline tightly.
-- **Rust's generic slice-sum is heavier** (55): the `&[T]` slice + iterator-style
+- **D sits between C/C++ and Rust** (42): its `-betterC` templated sum is a touch
+  heavier than the byte-identical C/C++ loop (39) but well under Rust's (55).
+- **Rust's generic slice-sum is heaviest** (55): the `&[T]` slice + iterator-style
   bounds produce more setup than the raw-pointer C loop, but still **monomorphized,
   no dynamic dispatch**. The overhead is slice plumbing, not the abstraction.
 
