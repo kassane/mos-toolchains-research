@@ -55,7 +55,7 @@ purposes (docs/04), but ELF objects link freely across both.
 ```bash
 scripts/setup.sh          # download the 4 toolchains into /home/user/tools (~360 MB)
 source scripts/env.sh     # export $ZIG $LDC $RUSTC $SDKBIN $MOS_MATTR …
-scripts/run-all.sh        # build+run all 25 experiments on mos-sim (expect 0 failing)
+scripts/run-all.sh        # build+run all 26 experiments on mos-sim (expect 0 failing)
 ```
 
 Each `experiments/NN-*/run.sh` is self-contained and ends by executing its

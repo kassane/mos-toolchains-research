@@ -84,9 +84,9 @@ the rate-limited API). Where an issue maps to one of our experiments, it's noted
   remain machine-inert). Another rolling-tag capability bump (exp 14, docs/12).
 - **`@llvm.returnaddress` is unlowerable** → Zig `-ODebug` fails on safety-checked
   ops (use wrapping ops / a release mode; exp 11, docs/10). **ReleaseSafe's default
-  panic handler crashes** the LLVM-22 backend's `MachineCopyPropagation` (upstream
-  llvm#167336) → use the `mos_panic` handler (exp 21, docs/12). Both **persist** on
-  the current build (LLVM 22).
+  panic handler crashes** the LLVM-22 backend (upstream llvm#167336) → use the
+  `mos_panic` handler; the full `MachineCopyPropagation` mechanism is in docs/12
+  (exp 21). Both **persist** on the current build (LLVM 22).
 - **`extern struct` over-aligns** (`@alignOf(u32)`=4 ≠ the MOS datalayout's 1) so a
   Zig struct misreads a C struct unless fields are `align(1)` (exp 08, docs/05).
 

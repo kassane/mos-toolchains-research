@@ -73,7 +73,7 @@ experiments that execute on `mos-sim`.
 - [x] `zig cc` as Rust linker (exp 17): compiles MOS objs, links native LLVM-23
       ELF, but the SDK's LLVM-23 *bitcode* libc trips zig's LLVM-22 lld (cluster
       wall); use the SDK driver. Documented in docs/04.
-- [x] Docs `00..14`, README, Research, CLAUDE. rust-mos version noted as 1.98.0-dev.
+- [x] Docs `00..15`, README, Research, CLAUDE. rust-mos version noted as 1.98.0-dev.
 
 ## Key results (the numbers a reviewer will check)
 
@@ -92,8 +92,9 @@ experiments that execute on `mos-sim`.
 
 ## Known limitations / gaps (honest)
 
-- **Floating point not exercised across FFI** — soft-float on MOS is rough
-  (llvm-mos#10); the matrix deliberately uses integers/pointers only.
+- **Floating point not passed across FFI** — soft-float on MOS is rough
+  (llvm-mos#10); the matrix deliberately uses integers/pointers only. (Float *math*
+  itself does run at runtime — exp 26 — just not as an FFI argument.)
 - **No real hardware** — verification is the `mos-sim` simulator (cycle-accurate
   enough for ABI/behavior; not a C64/NES runtime test).
 - **Zig↔C struct passing** only safe with `align(1)` fields; by-value large
