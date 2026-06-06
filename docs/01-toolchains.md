@@ -79,7 +79,7 @@ $LDC -betterC -Oz --mtriple=mos -mcpu=mos6502 -mattr=$MOS_MATTR -c file.d -of=o.
 $LDC -betterC -Oz --mtriple=mos -mcpu=mos6502 -output-ll -of=out.ll -c file.d   # IR
 ```
 
-**ImportC** (compile C directly with `-i`) works for MOS — but the C preprocessor must be a
+**ImportC** (pass a `.c` straight to `ldc2`) works for MOS — but the C preprocessor must be a
 MOS clang: pass `-gcc=$SDKBIN/mos-sim-clang` (and `-P-I<dir>` for headers); the default host
 `/usr/bin/clang` rejects `-mtriple=mos`. The rebuilt LDC gives ImportC a **16-bit `int`**
 (`sizeof(int)==2`, matching the C ABI; dlang-mos-hello-world#1, docs/07, exp 27). It runs C
@@ -87,7 +87,7 @@ through the D frontend so it applies D's lowering rules (by-value structs as fir
 aggregates, not C scalar decomposition), but the machine ABI still matches C:
 
 ```bash
-$LDC -betterC -Oz -mtriple=mos -mcpu=mos6502 -mattr=$MOS_MATTR -gcc=$SDKBIN/mos-sim-clang -P-I<dir> -i -c file.c -of=o.o
+$LDC -betterC -Oz -mtriple=mos -mcpu=mos6502 -mattr=$MOS_MATTR -gcc=$SDKBIN/mos-sim-clang -P-I<dir> -c file.c -of=o.o
 ```
 
 ## The mos-sim simulator
