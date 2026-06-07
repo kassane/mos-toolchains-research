@@ -1,0 +1,17 @@
+# toolchains.lock — content-addressed pins for the 4 LLVM-MOS toolchains.
+#
+# THE HASH IS THE SOURCE OF TRUTH. scripts/setup.sh downloads each tag URL, then
+# verifies the artifact's sha256 against THIS file and aborts on mismatch. A
+# silent upstream re-upload under the same tag therefore breaks the build BY
+# DESIGN — see HANDOFF.md "Toolchain re-pin procedure" for the deliberate bump.
+#
+# sha256 + size_bytes were computed from the actual downloaded artifacts
+# (2026-06); zig/ldc/rust cross-check the inline pins they replaced. 'commit' is
+# the LLVM-MOS / fork git commit when the toolchain exposes one, else 'unverified'
+# (zig/ldc carry no commit in --version; rustc reports commit-hash: unknown).
+#
+# columns: name  sha256  size_bytes  resolved_tag  commit  url
+zig   8f45d8969fec2f624e43bf8022046e1d83c41ad19f75421367b39c0be89345ff  80144900   0.17.0-dev  unverified                                https://github.com/kassane/zig-mos-bootstrap/releases/download/0.17.0-dev/zig-mos-x86_64-linux-musl-baseline.tar.xz
+ldc   d28e00b27f39b7c43a1c958e2483eed50101acae40f341ea088d2821ca19b000  81366752   0.1.0       unverified                                https://github.com/kassane/zig-mos-bootstrap/releases/download/0.1.0/ldc2-mos-x86_64-linux-musl.tar.xz
+sdk   bd76dd5a826b83e438bf55dbdd512d65d4600ba80fda919dca633cad76f023cc  100731804  v23.0.1     c798c31416f72b395c658b5502d281a162387ab1  https://github.com/llvm-mos/llvm-mos-sdk/releases/download/v23.0.1/llvm-mos-linux.tar.xz
+rust  26f8e36245d73dbc4affdb258a572642aec885ff5d3049a7c35ff4d990cc93de  118208596  0.1.0       unverified                                https://github.com/kassane/zig-mos-bootstrap/releases/download/0.1.0/rust-mos-x86_64-linux-glibc-ubuntu.tar.xz

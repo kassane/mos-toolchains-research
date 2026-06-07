@@ -6,7 +6,9 @@ experiments that execute on `mos-sim`.
 ## Done
 
 - [x] 4 toolchains pinned + scripted (`scripts/setup.sh`): SDK clang 23, rust-mos
-      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 23).
+      1.98 (LLVM 23), Zig 0.17-mos (LLVM 22), LDC 1.42 (LLVM 23). All four are
+      content-addressed in `toolchains.lock` (sha256 verified on download; see
+      "Toolchain pinning" below).
 - [x] `scripts/env.sh` + `scripts/run-all.sh`; **27/27 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
@@ -104,6 +106,27 @@ experiments that execute on `mos-sim`.
   LLVM 23 — the upstream generic-legalize fix doesn't cover the MOS narrowing
   path). Not all of `core`/`alloc` was exercised.
 - **`ldc#4919` premise** in the task was about wasm32, not MOS; recorded in docs/07.
+
+## Toolchain pinning (content-addressed)
+
+The 4 toolchains live OUTSIDE the repo (`/home/user/tools`, uncommitted); what
+the repo pins is their **content**. `toolchains.lock` records `sha256` + size +
+resolved tag + commit per toolchain, and `scripts/setup.sh` verifies each
+downloaded artifact's sha256 against the lock, aborting on mismatch (no silent
+fallback). All four — **including the SDK, previously unpinned** — are now gated
+this way; the lock is the single source of truth (setup.sh reads the hash from it).
+
+- **A silent upstream re-upload under the same tag breaks the build BY DESIGN.**
+  The kassane zig/ldc/rust tags (and the SDK release URL) are mutable; if an
+  artifact's bytes change, `sha256sum -c` fails and setup stops. Drift is caught,
+  not absorbed.
+- **Deliberate re-pin ("fork bumped") procedure:** re-download the artifact,
+  recompute sha256 + size (`sha256sum`, `stat -c%s`), update that one row in
+  `toolchains.lock`, and commit the diff on its own as an explicit
+  "<tool> fork bumped" change — the lock diff IS the audit trail. Never loosen or
+  remove the check to accept a new hash. `commit` is filled from the tool's own
+  `--version` when it exposes one (the SDK clang does: LLVM-MOS `c798c31…`),
+  otherwise `unverified` (zig/ldc carry none; rustc reports `commit-hash: unknown`).
 
 ## Next steps (if resumed)
 
