@@ -37,6 +37,30 @@ hard outlier is Zig's default struct alignment.
 **Safety leader:** Rust (compile-time *and* working runtime checks on MOS); D
 matches the compile-time half via `@safe`.
 
+## Gap-closure taxonomy
+
+*How* each gap closed, not just whether — so the engineering cost is visible.
+Categories: **pure-composition** (FFI/link only, no rebuild or source change) ·
+**runtime-rebuild** (a toolchain/fork rebuild changed runtime behavior) ·
+**callconv/frontend-patch** (the frontend's ABI/codegen was patched) ·
+**source-workaround** (fixed in user source, toolchain untouched) · **open**
+(not closed). Every row cites a re-runnable experiment; an entry without evidence
+would be marked `unverified` (none currently are).
+
+| gap | how it closed | evidence |
+|--|--|--|
+| soft-float `sqrtf` absent in SDK libm | **pure-composition** — link the Rust `libm` crate (exports C `sqrtf`/`sqrt`); C/D/Zig sqrt then resolve, no rebuild | exp 26 |
+| cross-LLVM-version IR mixing (Zig 22 ↔ rest 23) | **pure-composition** — newer SDK driver parses/LTOs the older textual IR; link with the newest toolchain | exp 04 |
+| by-value struct ≤4B passed indirect → garbage | **callconv/frontend-patch** — D (LDC) & Rust callconv rebuilds decompose ≤4B aggregates into registers | exp 12 |
+| Rust inline asm rejected on MOS | **callconv/frontend-patch** — rust-mos#13 fixed in the rebuild (`asm!`/`global_asm!`/`clobber_abi("C")`) | exp 14 |
+| Zig `c_int` = 32-bit (≠ C's 16) | **runtime-rebuild** — rebuilt 0.17-dev Zig gained MOS C-ABI data → `c_int` = 16 | exp 03, 07 |
+| LDC `size_t` was ≥32-bit | **runtime-rebuild** — fixed in LDC 1.42 → `size_t` = 2 (pointer width) | exp 03 |
+| Zig `extern struct` over-aligns (`u32` → offset 4) | **source-workaround** — `align(1)` per field, or pass by pointer | exp 08 |
+| Zig ReleaseSafe bounds-check default panic crash | **source-workaround** — use the `mos_panic` handler (zig-mos-examples) | exp 21 |
+| `int` keyword width (C 16 vs D/Rust/Zig 32) & `c_int` semantics | **open / by-design** — language specs differ; cross with fixed-width types | exp 01, 03 |
+| CFI / stack unwinding (`.eh_frame` not emitted) | **open** — designed upstream (llvm-mos PR #519, dual-stack CFA), unmerged | exp 11 |
+| `__builtin_return_address` / `@returnAddress` | **open** — no MOS lowering in either LLVM cluster | exp 11 |
+
 **CPU coverage:** the backend accepts 14 `-mcpu` values
 (`mos6502 mos6502x mos65c02 mosr65c02 mosw65c02 mos65ce02 mos65el02 mos65dtv02
 mos4510 mos45gs02 moshuc6280 mosspc700 mossweet16 mosw65816`). All experiments

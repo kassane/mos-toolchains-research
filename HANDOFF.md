@@ -16,6 +16,10 @@ experiments that execute on `mos-sim`.
       each experiment's thing-under-test flips its exit code red — **25/27**
       proven load-bearing. **06-cpu-features** and **14-feature-probe** are NOT
       (their green can't be flipped); flagged, not fixed (GAP 2 hard constraint).
+- [x] Gap-closure taxonomy in `docs/00`: each gap classified pure-composition /
+      runtime-rebuild / callconv-frontend-patch / source-workaround / open, every
+      row citing a re-runnable experiment (e.g. `sqrtf` = pure-composition exp 26;
+      by-value struct = callconv-patch exp 12; `int` width = open/by-design 01/03).
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
       D `import()`, Zig `@embedFile`, asm `.incbin` — all identical bytes (exp 18).
 - [x] Compile-time reflection: D & Zig enumerate fields/names (`__traits`/`@typeInfo`);
