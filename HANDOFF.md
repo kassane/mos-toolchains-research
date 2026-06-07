@@ -12,6 +12,10 @@ experiments that execute on `mos-sim`.
 - [x] `scripts/env.sh` + `scripts/run-all.sh`; **27/27 experiments pass** (exit 0).
       All LDC calls carry `$LDC_PE` (`-preview=all --edition=2025`); Rust crates
       on edition 2024.
+- [x] Load-bearing-green audit (`experiments-audit.md`): a targeted mutation of
+      each experiment's thing-under-test flips its exit code red — **25/27**
+      proven load-bearing. **06-cpu-features** and **14-feature-probe** are NOT
+      (their green can't be flipped); flagged, not fixed (GAP 2 hard constraint).
 - [x] Compile-time file embedding 6 ways — C/C++ `#embed`, Rust `include_bytes!`,
       D `import()`, Zig `@embedFile`, asm `.incbin` — all identical bytes (exp 18).
 - [x] Compile-time reflection: D & Zig enumerate fields/names (`__traits`/`@typeInfo`);
@@ -129,6 +133,12 @@ this way; the lock is the single source of truth (setup.sh reads the hash from i
   otherwise `unverified` (zig/ldc carry none; rustc reports `commit-hash: unknown`).
 
 ## Next steps (if resumed)
+
+- **Make the 2 non-load-bearing experiments earn their green** (`experiments-audit.md`):
+  06-cpu-features needs a CMOS/BCD-sensitive routine so an `-mattr` feature delta
+  actually diverges the asm; 14-feature-probe needs a `bad` counter incremented on
+  any capability regression + `exit $((bad>0))`. Deferred by the GAP 2 hard
+  constraint (relaxing assertions is forbidden; these are real fixes to approve).
 
 - Interrupt-handler **codegen** experiment: exp 14 already proves the `interrupt` /
   `no_isr` attributes compile (and that Rust now has inline asm + `clobber_abi("C")`,
