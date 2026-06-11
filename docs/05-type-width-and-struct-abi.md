@@ -65,7 +65,12 @@ Datalayout `p1:8:8` → address space 1 is the 8-bit zero page. Supported:
 - Zig: `*addrspace(.zp) u8` has `@sizeOf == 1`; `@addrSpaceCast` narrows a normal
   16-bit pointer into it (emits `addrspacecast` in IR); `@ptrFromInt` builds one.
 - clang: `__attribute__((address_space(1))) char*` lowers to `ptr addrspace(1)`.
-- Rust/D: no surface syntax for it.
+- D: no first-class addrspace pointer type, but `ldc.llvmasm.__ir` injects
+  `ptr addrspace(1)` — it lowers to real zero-page `lda/sta $nn` and round-trips a
+  byte on mos-sim (exp 08). (`ldc.dcompute`'s typed `Pointer!(AddrSpace.Global,…)`
+  stays AS0 unless built with `-mdcompute-targets`; `@llvmAttr` works too but only
+  attaches function attributes, not address spaces.)
+- Rust: no surface syntax for it.
 
 ## Rules
 

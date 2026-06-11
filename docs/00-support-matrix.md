@@ -14,7 +14,7 @@ Evidence in the linked experiments; all verified on `mos-sim`.
 | `int` keyword = C's 16-bit | ✅ | ❌ (32) | ❌ (32) | ❌ (32) | use fixed width (exp 03) |
 | `c_int` matches C | — | ✅ (16) | — | ✅ (16) | Zig fixed — was 32 on older builds (exp 03/07) |
 | C-compatible struct layout | ✅ | ✅ `#[repr(C)]` | ✅ | ⚠️ `align(1)` | Zig over-aligns (exp 08) |
-| Zero-page address space | ✅ AS(1) | ❌ (not exposed) | ❌ | ✅ `.zp` | exp 08 |
+| Zero-page address space | ✅ AS(1) | ❌ (not exposed) | ⚠️ `ldc.llvmasm` IR | ✅ `.zp` | exp 08 |
 | Standard library on MOS | ⚠️ freestanding libc | ⚠️ `core`/`alloc` | ❌ `-betterC` only | ⚠️ `std` partial | docs/01 |
 | Inline asm | ✅ | ✅ | ✅ | ✅ | Rust via `asm_experimental_arch` (rust-mos#13 fixed); exp 14 |
 | LTO required | optional | ✅ required | optional | optional | rust target sets it |
@@ -56,6 +56,7 @@ would be marked `unverified` (none currently are).
 | Zig `c_int` = 32-bit (≠ C's 16) | **runtime-rebuild** — rebuilt 0.17-dev Zig gained MOS C-ABI data → `c_int` = 16 | exp 03, 07 |
 | LDC `size_t` was ≥32-bit | **runtime-rebuild** — fixed in LDC 1.42 → `size_t` = 2 (pointer width) | exp 03 |
 | Zig `extern struct` over-aligns (`u32` → offset 4) | **source-workaround** — `align(1)` per field, or pass by pointer | exp 08 |
+| D has no first-class zero-page (AS1) pointer type | **source-workaround** — `ldc.llvmasm.__ir` injects `ptr addrspace(1)` (→ `lda/sta $nn`, runs on sim) | exp 08 |
 | Zig ReleaseSafe bounds-check default panic crash | **source-workaround** — use the `mos_panic` handler (zig-mos-examples) | exp 21 |
 | `int` keyword width (C 16 vs D/Rust/Zig 32) & `c_int` semantics | **open / by-design** — language specs differ; cross with fixed-width types | exp 01, 03 |
 | CFI / stack unwinding (`.eh_frame` not emitted) | **open** — designed upstream (llvm-mos PR #519, dual-stack CFA), unmerged | exp 11 |

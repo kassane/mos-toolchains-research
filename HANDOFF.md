@@ -55,7 +55,9 @@ experiments that execute on `mos-sim`.
       module-scope asm in D). Absolute verified via `llvm-nm`, values read on mos-sim;
       + an inline-asm MMIO putchar with `A`+`memory` clobbers (docs/12).
 - [x] Struct-ABI hole (Zig over-alignment) reproduced + fixed; zero-page address
-      space incl. `@addrSpaceCast` from a 16-bit pointer (exp 08).
+      space incl. `@addrSpaceCast` from a 16-bit pointer (exp 08). D reaches AS1
+      via `ldc.llvmasm.__ir` (→ `ptr addrspace(1)` → `lda/sta $nn`, round-trips on
+      sim) — no first-class type; `@llvmAttr` works for function attrs.
 - [x] Zero-cost abstractions: C++ template ties C, lambdas/closures inline away;
       Rust slice-sum heavier but still static dispatch (exp 09).
 - [x] TMP / CTFE parity: constexpr/consteval/CTFE/const-fn fold at `-O0`
